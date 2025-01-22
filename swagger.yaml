@@ -1,0 +1,2485 @@
+---
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.1"
+  title: "IBANFIRST API documentation"
+host: "api.ibanfirst.com"
+tags:
+- name: "Wallets"
+  description: "In the IBANFIRST API, what we call a \"wallet\" account can be either\
+    \ a physical iban account, or a virtual iban account with IBANFIRST. \nA virtual\
+    \ account is an administrative \"subaccount\" of one physical iban account (the\
+    \ \"masteraccount\"). Cash can be earmarked as belonging to a virtual account\
+    \ so that you can easily allocate funds per business unit, per client, or incoming/outgoing\
+    \ transactions).\n"
+- name: "Financial movements"
+  description: "The IBANFIRST Rest API allows you to get all financial movements from\
+    \ your Wallets.\n"
+- name: "External bank account"
+  description: "In the IBANFIRST API, what we call `external bank` account, can be\
+    \ either your own account in another bank or a third party recipient account.\n"
+- name: "Payments"
+  description: "Sending funds from your IBANFIRST wallet account to your own bank\
+    \ account or a third-party recipient involves two steps:\n\n1. Generate the payment\
+    \ object with the Submit Payment method. \nWhen you submit a payment to be scheduled,\
+    \ you assign a unique id to that payment.  \n**Caution:** The payment created\
+    \ will be automatically rolled to the next closest working days if not confirmed\
+    \ in the scheduled date of operation.\n\n2. Confirm the payment to the API for\
+    \ processing, using the Confirm Payment method. \nWhen you confirm a payment for\
+    \ processing, make sure you have sufficient funds in your wallet account balance.\
+    \  \n**Caution:** If the balance of your wallet account is not sufficient to cover\
+    \ the payment amount, funds may be locked-in by IBANFIRST.\n"
+- name: "Trades"
+  description: "IBANFIRST provides a deliverable FX facility and deliverable FX liquidity\
+    \ via the IBANFIRST-REST API. You will become counterparty to IBANFIRST and can\
+    \ market and sell deliverable FX services to corporate and private clients as\
+    \ well as using such services on their behalf.  \n\nThe IBANFIRST-rest API supports\
+    \ online trading for the following contracts: TOD (Same-day), TOM (next-day),\
+    \ SPOT (T+2) and forward contracts up to one year.<br />\n\nFX trades are always\
+    \ made between two wallet accounts of a unique counterparty. IBANFIRST will automatically\
+    \ debit the source wallet account and credit the delivery wallet account at the\
+    \ date specified in the FX trade instructions. If the delivery date has been scheduled,\
+    \ the delivery is automatically processed in the morning before 00:30 am Paris\
+    \ time. If the delivery date is today (TOD), the funds is available on your wallet\
+    \ account by the next 20mn.\n\nA FX trades also involves an amount, which includes\
+    \ both the numeric amount and the currency in order to define if this amount is\
+    \ the nominal to be bought or sold, for example: '100000.00+GBP'.\n"
+- name: "Documents"
+  description: "The IBANFIRST API let you acces your online documents stored on the\
+    \ IBANFIRST platform.  \nNote that the API do not send the document content, but\
+    \ a one-time link to access it.  \nThis one-time link is only available once.\
+    \ So if you need another access to the document, you have to request another link\
+    \ by listing documents or getting document result.\n"
+- name: "Logs"
+  description: "As a developper, you might want to go further than sending request\
+    \ and recieve responses.  \nThe IBANFIRST API allows you to access the logs of\
+    \ its own services, to provide you some details about what you send, and what\
+    \ it's done on the platform.\n\nYou can retrieve informations during a certain\
+    \ time.  \nThis time passed, your log entry will be lost.\n\n| HTTP Method | Time\
+    \ |\n|-------------|------|\n| GET | 1 hour |\n| POST, PUT | 1 week |\n"
+- name: "Auth"
+  description: "This service is intended to authenticate users on the API for certain\
+    \ cases\n"
+schemes:
+- "https"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /wallets/:
+    get:
+      tags:
+      - "Wallets"
+      summary: "Get wallet list"
+      description: "With the Retrieve wallet list service, you can list obtain the\
+        \ list of all wallet account hold with IBANFIRST. The object return in the\
+        \ Array is a simplified version of the Wallet providing you the main information\
+        \ on the wallet without any additional request. \n"
+      operationId: "wallets_get"
+      parameters:
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      - name: "sort"
+        in: "query"
+        description: "A string representing the rendering order of objects. For wallet\
+          \ objects, the sorting is made by wallet's creation date.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            description: "An Array of objects representing wallets.\n"
+            items:
+              $ref: "#/definitions/inline_response_200"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.wallets_controller"
+    post:
+      tags:
+      - "Wallets"
+      summary: "Submit a new wallet"
+      description: "This request allows you to submit a new wallet.  \n**Caution :**\
+        \ The holder object in the parameters will only be considered if you suscribed\
+        \ to the `Multi account per currency with holder` wallet option.\n"
+      operationId: "wallets_post"
+      parameters:
+      - in: "body"
+        name: "wallet"
+        description: "The wallet to create\n"
+        required: true
+        schema:
+          $ref: "#/definitions/wallet"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Wallet"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.wallets_controller"
+  /wallets/-{id}:
+    get:
+      tags:
+      - "Wallets"
+      summary: "Get wallet details"
+      description: "This request allows you to see the details related to a specific\
+        \ wallet. \n"
+      operationId: "wallets_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the external bank account you want.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Wallet"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.wallets_controller"
+  /wallets/-{id}/balance/{date}:
+    get:
+      tags:
+      - "Wallets"
+      summary: "Retrieve wallet balance for a given date"
+      description: "This request allows you to see the details of a wallet balance\
+        \ at a given date. \n"
+      operationId: "wallets_id_balance_date_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the external bank account you want.\n"
+        required: true
+        type: "string"
+      - name: "date"
+        in: "path"
+        description: "The date used to retrieve the balance of the wallet.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/inline_response_200_1"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.wallets_controller"
+  /financialMovements/:
+    get:
+      tags:
+      - "Financial movements"
+      summary: "Retrieve financial movements history"
+      description: "Request the list of financial movements that has been received\
+        \ or sent on a specific period of time.\n"
+      operationId: "financial_movements_get"
+      parameters:
+      - name: "walletId"
+        in: "query"
+        description: "A wallet ID to specify to retreive only financial movements\
+          \ concerning this wallet.\n"
+        required: false
+        type: "string"
+      - name: "fromDate"
+        in: "query"
+        description: "The starting date to search financial movements on your wallets.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "toDate"
+        in: "query"
+        description: "The ending date to search financial movements on your wallets.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      - name: "sort"
+        in: "query"
+        description: "A code representing the order of rendering objects.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/inline_response_200_2"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.financial_movements_controller"
+  /financialMovements/-{id}:
+    get:
+      tags:
+      - "Financial movements"
+      summary: "Retrieve financial movements details"
+      description: "Request information on a particular financial movement that has\
+        \ been credited or debited to a wallet. \n <br />The typeLabel field may contain\
+        \ these values :<br /> <ul class='fmTypeList'> <li><b>rejectOperation:</b>\
+        \ Payment returned by the bank counterparty</li> <li><b>DebitForExchange:</b>\
+        \ Debit for an FX operation</li> <li><b>DebitForTransfer:</b> Debit linked\
+        \ to a transfer</li> <li><b>CreditForExchange:</b> Credit linked to an FX\
+        \ operation</li> <li><b>Immobilize:</b> Payment registered but not debited\
+        \ on value date</li> <li><b>ExternalCounterpartCredit:</b> Account credit</li>\
+        \ <li><b>debitForAccountGuaranteeCredit:</b> Movement related to the deposit\
+        \ for forward exchange transaction</li> <li><b>debitAccountGuarantee:</b>\
+        \ Movement related to the deposit for forward exchange transaction</li> <li><b>internalGuaranteeTransfer:</b>\
+        \ Movement related to the deposit for forward exchange transaction</li> <li><b>corrective:</b>\
+        \ Corrective</li> <li><b>rejectCreditDepositAccount:</b> Rejection of a flow\
+        \ credited to the account / after liquidation</li> <li><b>returnFund:</b>\
+        \ Payment returned by the recipient counterparty</li> <li><b>rejectDebit:</b>\
+        \ Rejection of an automatic debit on iBanFirst account (SDD)</li> <li><b>PrepaidCardDepositAccountDebit:</b>\
+        \ Initialization of a virtual payment card</li> <li><b>PrepaidCardDepositAccountCredit:</b>\
+        \ Recredit funds stored on a virtual payment card that expires</li> <li><b>clientFee:</b>\
+        \ Fees for using iBanFirst accounts</li> <li><b>cancelClientFee :</b> Commercial\
+        \ gesture</li> <li><b>DirectDebit :</b> Direct debit on iBanFirst account</li>\
+        \ </ul>"
+      operationId: "financial_movements_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The ID referring the financial movement.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/FinancialMovement"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.financial_movements_controller"
+  /externalBankAccounts/:
+    get:
+      tags:
+      - "External bank account"
+      summary: "Get external bank accounts list"
+      description: "With the IBANFIRST API, you can list all the external bank accounts\
+        \ referenced with your account.\n"
+      operationId: "external_bank_accounts_get"
+      parameters:
+      - name: "sort"
+        in: "query"
+        description: "A code representing the order of rendering external bank accounts\
+          \ with their creation date.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            description: "An array containing [External Bank Account Object](../objects/objects.md#account_object)\
+              \ describing requested external bank accounts.\n"
+            items:
+              $ref: "#/definitions/ExternalBankAccount"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.external_bank_account_controller"
+    post:
+      tags:
+      - "External bank account"
+      summary: "Submit a new external bank account"
+      description: "By submitting a new `external bank` account, you must supply the\
+        \ relevant details in order to pay a beneficiary.<br />\n**Caution.** All\
+        \ your `physical` iban accounts hold with IBANFIRST will be automatically\
+        \ created when subscribing with us.\n\nThe Submit External Bank Account service\
+        \ allows to reference `external bank` accounts which can be either your own\
+        \ accounts in another bank or a third party account.\n\nAdding an external\
+        \ bank has some rules :\n\n* If you have the BIC/SWIFT of the bank, just submit\
+        \ it, and we will recover informations of the bank on our own.\n* If you do\
+        \ not have the BIC/SWIFT of the bank, you have to refer at least its clearing\
+        \ code type, its clearing code and its name.\n* In both cases, if values are\
+        \ not mentionned above, they are not required.\n\nThis service include verifications\
+        \ on the format of the account created.\nThe API has been made in order to\
+        \ accept local specification of cross-boarder payments.\n\nThe Api accepts\
+        \ the following formats of `external bank` accounts :\n\n  - Austrian Bankleitzahl\n\
+        \  - Australian Bank State Branch\n  - German Bankleitzahl\n  - Canadian Payments\
+        \ Association Payment Routing Number\n  - Spanish Domestic Interbanking Code\n\
+        \  - Fedwire Routing Number\n  - HEBIC (Hellenic Bank Identification Code)\n\
+        \  - Bank Code of Hong Kong\n  - Irish National Clearing Code (NSC)\n  - Indian\
+        \ Financial System Code (IFSC)\n  - Italian Domestic Identification Code\n\
+        \  - New Zealand National Clearing Code\n  - Polish National Clearing Code\
+        \ (KNR)\n  - Portuguese National Clearing Code\n  - Russian Central Bank Identification\
+        \ Code\n  - UK Domestic Sort Code\n  - Swiss Clearing Code\n  - South African\
+        \ National Clearing Code\n\nOf course, it is possible to reference third party\
+        \ `wallet` accounts and execute an instant and free `wallet2wallet` payment\
+        \ at this destination. \n"
+      operationId: "external_bank_accounts_post"
+      parameters:
+      - in: "body"
+        name: "account"
+        description: "the account to post"
+        required: true
+        schema:
+          $ref: "#/definitions/account"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ExternalBankAccount"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.external_bank_account_controller"
+  /externalBankAccounts/-{id}:
+    get:
+      tags:
+      - "External bank account"
+      summary: "Get external bank account details"
+      description: "This request allows you to see the details related to an external\
+        \ bank account.\n"
+      operationId: "external_bank_accounts_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The ID of the external bank account you want. As ID's are listed\
+          \ with the External Bank Account Objects, You can retrieve this by listing\
+          \ all external bank accounts for the current user. \n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ExternalBankAccount"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.external_bank_account_controller"
+    delete:
+      tags:
+      - "External bank account"
+      summary: "Delete an external bank account"
+      description: "Delete an external bank account. \n"
+      operationId: "external_bank_accounts_id_delete"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The ID of the external bank account you want to delete.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ProcessResult"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.external_bank_account_controller"
+  /payments/:
+    post:
+      tags:
+      - "Payments"
+      summary: "Submit a payment"
+      description: "You can use this request in order to schedule a new payment. \n\
+        \nYou may want to use the GET `/payments/options/-{walletId}/-{externalBankAccountId}/`\
+        \ before calling this service to get proper values for `feePaymentOption`\
+        \ and `priorityPaymentOption` concerning your payment.\n\nYou can also use\
+        \ this request to get the cost of a payment.\n"
+      operationId: "payments_post"
+      parameters:
+      - in: "body"
+        name: "payment"
+        description: "The payment to post\n"
+        required: true
+        schema:
+          $ref: "#/definitions/payment"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /payments/options/-{walletId}/-{externalBankAccountId}/:
+    get:
+      tags:
+      - "Payments"
+      summary: "Get payment options for a wallet and an external bank account"
+      description: "Before doing any payments, you may use this request to get payments\
+        \ options for the payment you want to do. \nThis will give you the `priorityPaymentOption`\
+        \ and `feePaymentOption` available for the given wallet and external bank\
+        \ account.\nYou will also get fee cost for each `priorityPaymentOption` and\
+        \ `feePaymentOption` combinations, and minimal source and target amount to\
+        \ use this combination.\n"
+      operationId: "payments_options_wallet_id_external_bank_account_id_get"
+      parameters:
+      - name: "walletId"
+        in: "path"
+        description: "The source wallet ID you want to put your payment debit on.\n"
+        required: true
+        type: "string"
+      - name: "externalBankAccountId"
+        in: "path"
+        description: "The target external bank account ID you want to put your payment\
+          \ credit on.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/PaymentOption"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /payments/_{status}/:
+    get:
+      tags:
+      - "Payments"
+      summary: "Get payment list by status"
+      description: "Request the list of payments that has been created on a specific\
+        \ period of time.\n"
+      operationId: "payments_status_get"
+      parameters:
+      - name: "status"
+        in: "path"
+        description: "A code representing the status of the payments you want to get.\n"
+        required: true
+        type: "string"
+        enum:
+        - "all"
+        - "planified"
+        - "rejected"
+        - "finalized"
+        - "canceled"
+        - "refused"
+        - "blocked"
+        - "waitingconfirmation"
+      - name: "fromDate"
+        in: "query"
+        description: "The starting date to search payments.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "toDate"
+        in: "query"
+        description: "The ending date to search payments.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      - name: "sort"
+        in: "query"
+        description: "A code representing the order of rendering objects.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /payments/-{id}:
+    get:
+      tags:
+      - "Payments"
+      summary: "Get payment details"
+      description: "Retrieve the details of a specific payment.\n"
+      operationId: "payments_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the payment you want.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+    delete:
+      tags:
+      - "Payments"
+      summary: "Delete a payemt"
+      description: "The code identifying the payment you want to delete.\n"
+      operationId: "payments_id_delete"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the payment you want to delete.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /payments/-{id}/confirm:
+    put:
+      tags:
+      - "Payments"
+      summary: "Confirm a payment"
+      description: "Payments that has been scheduled must be confirmed in order to\
+        \ be released.<br />\nIf the payment is not confirmed before the end of scheduled\
+        \ date of operation, it will be automatically postponed to the next operation\
+        \ date available.\n"
+      operationId: "payments_id_confirm_put"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the payment you want to confirm.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /payments/-{id}/proofOfTransaction/:
+    put:
+      tags:
+      - "Payments"
+      summary: "Upload a proof of transaction for a payment"
+      description: "We may ask you to provide a proof of transaction under specific\
+        \ terms. You can anticipate our request and send us your invoice or the ID\
+        \ of the beneficiary to avoid any request from us and fully automate your\
+        \ payment process.<br />\nTo send a file with this request, you have to extract\
+        \ the content of the file with a binary format, and encode it with a base64\
+        \ algorithm to put in in the “file” field.\n"
+      operationId: "payments_id_proof_of_transaction_put"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the payment you want to confirm.\n"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "proofOfTransaction"
+        description: "The proof of transaction to upload\n"
+        required: true
+        schema:
+          $ref: "#/definitions/proofOfTransaction"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Payment"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.payments_controller"
+  /rates/{currencies}:
+    get:
+      tags:
+      - "Trades"
+      summary: "Retrieve Rates"
+      description: "The IBANFIRST-REST API provides a FX Data Feed. The Rates service\
+        \ is a read-only service, it provides \"gross\" rates: this is mid-market\
+        \ rates but usually with 5mn delays. You can use these rates for your internal\
+        \ needs (charts, consolidation etc..).  \n"
+      operationId: "rates_currencies_get"
+      parameters:
+      - name: "currencies"
+        in: "path"
+        description: "A code representing a list of CurrencyPair. Crosses must be\
+          \ separated with commas. \nYou can chain as many crosses as you want, as\
+          \ long as they're separated with commas.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Rate"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.trades_controller"
+  /quotes/:
+    post:
+      tags:
+      - "Trades"
+      summary: "Create quotes (beta)"
+      description: "The Create Quote service is a read-only service permitting to\
+        \ ask for a real-time rate."
+      operationId: "quotes_post"
+      parameters:
+      - in: "body"
+        name: "quote"
+        required: true
+        schema:
+          $ref: "#/definitions/quote"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Quote"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.trades_controller"
+  /trades/:
+    post:
+      tags:
+      - "Trades"
+      summary: " Execute trade (beta)"
+      description: "This service allows you to execute trade on the real-time Forex\
+        \ market.\n"
+      operationId: "trades_post"
+      parameters:
+      - in: "body"
+        name: "trade"
+        required: true
+        schema:
+          $ref: "#/definitions/trade"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Trade"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.trades_controller"
+  /trades/_{status}/:
+    get:
+      tags:
+      - "Trades"
+      summary: "Retrieve trade book (beta)"
+      description: "Retrieve the list of trades executed.\n"
+      operationId: "trades_status_get"
+      parameters:
+      - name: "status"
+        in: "path"
+        description: "A code representing the status of the trades you want to get.\n"
+        required: true
+        type: "string"
+        enum:
+        - "all"
+        - "planified"
+        - "rejected"
+        - "finalized"
+        - "canceled"
+        - "refused"
+        - "blocked"
+        - "waitingconfirmation"
+      - name: "fromDate"
+        in: "query"
+        description: "The starting date to search trades.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "toDate"
+        in: "query"
+        description: "The ending date to search trades.\n"
+        required: false
+        type: "string"
+        format: "YYYY-MM-DD"
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      - name: "sort"
+        in: "query"
+        description: "A code representing the order of rendering objects.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Trade"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.trades_controller"
+  /trades/-{id}:
+    get:
+      tags:
+      - "Trades"
+      summary: "Retrieve trade details (beta)"
+      description: "Retrieve the trade details.\n"
+      operationId: "trades_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The code identifying the trade you want.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Trade"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.trades_controller"
+  /documents/:
+    get:
+      tags:
+      - "Documents"
+      summary: "Retrieve documents list"
+      description: "The IBANFIRST-REST API allows you to retrieve your documents from\
+        \ the IBANFIRST platform. This request gives you a more simple view than the\
+        \ document detail request.\n"
+      operationId: "documents_get"
+      parameters:
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/inline_response_200_3"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.documents_controller"
+  /documents/-{id}:
+    get:
+      tags:
+      - "Documents"
+      summary: "Retrieve documents details"
+      description: "Retrieve details from a given document.\n"
+      operationId: "documents_id_get"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The unique identifier of the document you want.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Document"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.documents_controller"
+  /documents/RIB/:
+    get:
+      tags:
+      - "Documents"
+      summary: "Retrieve RIB"
+      description: "Retrieve details of the RIB for the wallet\n"
+      operationId: "documents_ribget"
+      parameters: []
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Document"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.documents_controller"
+  /documents/upload/{object}/{objectId}/{typeOfDocumentation}/:
+    get:
+      tags:
+      - "Documents"
+      summary: "Upload a document for an API object"
+      description: "This service allows you to upload a document on a given object\
+        \ of a certain type. You can, for example, upload identity for you externalBankAccount,\
+        \ or invoices for your payments.\n\nFor `externalBankAccount` object type,\
+        \ you can only upload `identity` type of documents.\n\nFor `payment` object\
+        \ type, you can only upload `identity` and `invoice` type of documents.\n\n\
+        To send a file with this request, you have to extract the content of the file\
+        \ with a binary format, and encode it with a base64 algorithm to put  in the\
+        \ “file” field.\n"
+      operationId: "documents_upload_object_object_id_type_of_documentation_get"
+      parameters:
+      - name: "object"
+        in: "path"
+        description: "The type of object you want to upload a document on.\n"
+        required: true
+        type: "string"
+        enum:
+        - "externalBankAccount"
+        - "payment"
+      - name: "objectId"
+        in: "path"
+        description: "The unique identifier of the object you want to upload a document\
+          \ on.\n"
+        required: true
+        type: "string"
+      - name: "typeOfDocumentation"
+        in: "path"
+        description: "The type document you want to upload on your object.\n"
+        required: true
+        type: "string"
+        enum:
+        - "identity"
+        - "invoice"
+      - in: "body"
+        name: "documentToUpload"
+        description: "The document to upload\n"
+        required: true
+        schema:
+          $ref: "#/definitions/documentToUpload"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Document"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.documents_controller"
+  /logs/:
+    get:
+      tags:
+      - "Logs"
+      summary: "Retrieve log list"
+      description: "The IBANFIRST-REST API provides a log feed about request you made,\
+        \ allowing you to know exactly what your request do on the platform.  \nThis\
+        \ request uses the login sent in your header to get logs about this user's\
+        \ actions.\n"
+      operationId: "logs_get"
+      parameters:
+      - name: "page"
+        in: "query"
+        description: "Index of the page.\n"
+        required: false
+        type: "string"
+        default: "1"
+      - name: "per_page"
+        in: "query"
+        description: "Inumber of items returned.\n"
+        required: false
+        type: "string"
+        default: "50"
+      - name: "sort"
+        in: "query"
+        description: "A code representing the order of rendering objects.\n"
+        required: false
+        type: "string"
+        enum:
+        - "ASC"
+        - "DESC"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Log"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.logs_controller"
+  /logs/-{nonce}:
+    get:
+      tags:
+      - "Logs"
+      summary: "Retrieve log details"
+      description: "In case of somewhat happens during the request, the IBANFIRST\
+        \ API allows you to retrive a log entry by its nonce.  \n"
+      operationId: "logs_nonce_get"
+      parameters:
+      - name: "nonce"
+        in: "path"
+        description: "The nonce used to authenticate the request. As the one in the\
+          \ header, this nonce has to be Base64 encoded. The nonce you get with `GET\
+          \ /logs` is already encoded.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Log"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.logs_controller"
+  /APIHelpers/Auth/WithToken/{token}/:
+    get:
+      tags:
+      - "Auth"
+      summary: "Authenticate user and getting informations"
+      description: "This request authenticate a user and return informations about\
+        \ it.\n\nUnless other requests, this request do not use the prefix \"api\"\
+        , so you must call it directly with <url_root>/APIHelpers/Auth/WithToken/{token}/.\
+        \ Also, in case of error, the type of error message is different. It is only\
+        \ made of a string indicating the error.\n"
+      operationId: "a_pi_helpers_auth_with_token_token_get"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The API token of the user.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/UserInformation"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/inline_response_default"
+      x-swagger-router-controller: "swagger_server.controllers.auth_controller"
+  /APIHelpers/Auth/Invalidate/Token/{token}/:
+    get:
+      tags:
+      - "Auth"
+      summary: "Invalidate a token"
+      description: "This request allows you to invalidate a user API token.\n\nUnless\
+        \ other requests, this request do not use the prefix \"api\", so you must\
+        \ call it directly with <url_root>/APIHelpers/Auth/WithToken/{token}/. Also,\
+        \ in case of error, the type of error message is different. It is only made\
+        \ of a string indicating the error.\n"
+      operationId: "a_pi_helpers_auth_invalidate_token_token_get"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The API token of the user.\n"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/ProcessResult"
+        default:
+          description: "ERROR"
+          schema:
+            $ref: "#/definitions/inline_response_default"
+      x-swagger-router-controller: "swagger_server.controllers.auth_controller"
+definitions:
+  ExternalBankAccount:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the account.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      currency:
+        description: "The three-digit code specifying the currency of the account.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "Custom reference of the account.\n"
+        maxLength: 50
+      accountNumber:
+        type: "string"
+        description: "The code specifying the account (can be either an Iban or an\
+          \ account number).\n"
+        maxLength: 40
+      correspondentBank:
+        description: "The intermediary bank details, used to reach the beneficiary\
+          \ bank.\n"
+        $ref: "#/definitions/CorrespondantBank"
+      holderBank:
+        description: "The recipient bank details, holding the account.\n"
+        $ref: "#/definitions/HolderBank"
+      holder:
+        description: "The recipient details, owner of the account.\n"
+        $ref: "#/definitions/Holder"
+    example:
+      correspondentBank:
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        bic: "bic"
+      holderBank:
+        clearingCodeType: "clearingCodeType"
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        clearingCode: "clearingCode"
+        bic: "bic"
+      currency: "USD"
+      holder:
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        type: "Individual"
+      id: "Na5Dv6E"
+      tag: "tag"
+      accountNumber: "accountNumber"
+  Wallet:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying of the account.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      currency:
+        description: "The three-digit code specifying the currency of the account.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "Custom reference associated to this wallet. (For internal use\
+          \ only, not communicated to any beneficiary).\n"
+        maxLength: 50
+      status:
+        type: "string"
+        description: "The code identifying the status of the account.\n"
+        enum:
+        - "authorized"
+        - "locked"
+        - "not authorized"
+      accountNumber:
+        type: "string"
+        description: "Iban or account number.\n"
+        maxLength: 40
+      correspondentBank:
+        description: "The intermediary bank details, used to reach the beneficiary\
+          \ bank.\n"
+        $ref: "#/definitions/CorrespondantBank"
+      holderBank:
+        description: "The recipient bank details, holding the account.\n"
+        $ref: "#/definitions/HolderBank"
+      holder:
+        description: "The recipient details, owner of the account.\n"
+        $ref: "#/definitions/Holder"
+    description: "Representation of a Wallet\n"
+    example:
+      correspondentBank:
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        bic: "bic"
+      holderBank:
+        clearingCodeType: "clearingCodeType"
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        clearingCode: "clearingCode"
+        bic: "bic"
+      currency: "USD"
+      holder:
+        address:
+          country: "country"
+          province: "province"
+          city: "city"
+          street: "street"
+          postCode: "postCode"
+        name: "name"
+        type: "Individual"
+      id: "Na5Dv6E"
+      tag: "tag"
+      accountNumber: "accountNumber"
+      status: "authorized"
+  Address:
+    type: "object"
+    required:
+    - "country"
+    properties:
+      street:
+        type: "string"
+        description: "The street and street number for the address described.\n"
+        maxLength: 255
+      postCode:
+        type: "string"
+        description: "The ZIP/Post code for the address described.\n"
+        maxLength: 15
+      city:
+        type: "string"
+        description: "The city for the address described.\n"
+        maxLength: 35
+      province:
+        type: "string"
+        description: "The province code for the address described. This field could\
+          \ be required if the country use a province system, like United States or\
+          \ Canada. To see a full list of province code, please refer to http://www.mapability.com/ei8ic/contest/states.php.\n"
+        maxLength: 2
+      country:
+        type: "string"
+        description: "The two-letters abbreviation for the country, following the\
+          \ ISO-3166 for the address described.\n"
+        maxLength: 8
+    description: "Representation of an address\n"
+    example:
+      country: "country"
+      province: "province"
+      city: "city"
+      street: "street"
+      postCode: "postCode"
+  Amount:
+    type: "object"
+    required:
+    - "currency"
+    - "value"
+    properties:
+      value:
+        description: "The quantity of the currency.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      currency:
+        description: "The three-digit code specifying the currency related to the\
+          \ amount.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+    description: "Representation of an amount.\n"
+    example:
+      currency: "USD"
+      value: "2.257"
+  Balance:
+    type: "object"
+    properties:
+      closingDate:
+        description: "The closing date of the balance details given.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      bookingAmount:
+        description: "The closing balance of the account.\n"
+        $ref: "#/definitions/Amount"
+      valueAmount:
+        description: "The closing value of the account.\n"
+        $ref: "#/definitions/Amount"
+    description: "Representation of a balance.\n"
+    example:
+      valueAmount:
+        currency: "USD"
+        value: "2.257"
+      closingDate: "2016-01-01"
+      bookingAmount:
+        currency: "USD"
+        value: "2.257"
+  HolderBank:
+    type: "object"
+    properties:
+      bic:
+        type: "string"
+        description: "Eight or eleven-digit ISO 9362 Business Identifier Code specifying\
+          \ the Recipient Bank.<br />This field is optional only when the account\
+          \ number does not have an Iban format."
+        maxLength: 11
+      clearingCodeType:
+        type: "string"
+        description: "The two-digit code specifying the local clearing network.<br\
+          \ />If you does not have a bic, this field is required."
+        maxLength: 2
+      clearingCode:
+        type: "string"
+        description: "The code identifying the branch number on the local clearing\
+          \ network.<br />If you does not have a bic, this field is required."
+        maxLength: 15
+      name:
+        type: "string"
+        description: "The beneficiary bank name.\n"
+        maxLength: 120
+      address:
+        description: "The beneficiary bank address.\n"
+        $ref: "#/definitions/Address"
+    description: "Representation of a beneficiary bank.\n"
+    example:
+      clearingCodeType: "clearingCodeType"
+      address:
+        country: "country"
+        province: "province"
+        city: "city"
+        street: "street"
+        postCode: "postCode"
+      name: "name"
+      clearingCode: "clearingCode"
+      bic: "bic"
+  Holder:
+    type: "object"
+    required:
+    - "name"
+    - "type"
+    properties:
+      name:
+        type: "string"
+        description: "The name of the account owner.\n"
+        maxLength: 100
+      type:
+        type: "string"
+        description: "The code identifying the type of account owner.\n"
+        maxLength: 10
+        enum:
+        - "Individual"
+        - "Corporate"
+      address:
+        description: "The account owner address.\n"
+        $ref: "#/definitions/Address"
+    description: "What we call a Holder can be either an Individual or an Organisation\
+      \ that own the account.\nMay also be referred to as: Beneficiary/Supplier/Vendor/Payee/Recipient.\n\
+      \nIn the beneficiary address, only the Country is mandatory, but you can specify\
+      \ all fields to be more precise.\n"
+    example:
+      address:
+        country: "country"
+        province: "province"
+        city: "city"
+        street: "street"
+        postCode: "postCode"
+      name: "name"
+      type: "Individual"
+  CorrespondantBank:
+    type: "object"
+    properties:
+      bic:
+        type: "string"
+        description: "Eight or eleven-digit ISO 9362 Business Identifier Code specifying\
+          \ the Recipient Bank.\n"
+        maxLength: 11
+      name:
+        type: "string"
+        description: "The beneficiary bank name.\n"
+        maxLength: 120
+      address:
+        description: "The correspondant bank address.\n"
+        $ref: "#/definitions/Address"
+    description: "Representation of a correspondant bank.\n"
+    example:
+      address:
+        country: "country"
+        province: "province"
+        city: "city"
+        street: "street"
+        postCode: "postCode"
+      name: "name"
+      bic: "bic"
+  Payment:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the payment.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      status:
+        type: "string"
+        description: "The code identifying the payment status.\n"
+        enum:
+        - "planified"
+        - "rejected"
+        - "finalized"
+        - "canceled"
+        - "refused"
+        - "blocked"
+        - "waitingconfirmation"
+      createdDate:
+        description: "The creation date of the payment.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      desiredExecutionDate:
+        description: "The initial date of execution when the payment is created.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      executionDate:
+        description: "The effective date of execution of the payment.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      amount:
+        description: "The nominal amount to be transfered.\n"
+        $ref: "#/definitions/Amount"
+      counterValue:
+        description: "The amount of the counter value when there is a trade.\n"
+        $ref: "#/definitions/Amount"
+      rate:
+        description: "A Rate describing FX market information asoociated to the trade.\n"
+        $ref: "#/definitions/Rate"
+      tag:
+        type: "string"
+        description: "The custom reference related to the payment. (For internal use\
+          \ only, not communicated to the beneficiary).\n"
+        maxLength: 50
+      externalBankAccountId:
+        description: "The code identifying the beneficiary account.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      sourceWalletId:
+        description: "The code identifying the wallet the payment will be processed.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      communication:
+        type: "string"
+        description: "The wording of the payment.\n"
+        maxLength: 50
+      priorityPaymentOption:
+        type: "string"
+        description: "The code representing whether this payment as a normal priority\
+          \ or if it as to be treated with a priority status by all the routing banks.\n"
+        enum:
+        - "48H"
+        - "24H"
+        - "1H"
+      feePaymentOption:
+        type: "string"
+        description: "The code identifying the charges option for this payment.\n"
+        enum:
+        - "BEN"
+        - "OUR"
+        - "SHARE"
+        - "SEPA"
+        - "DSP"
+        - "RTGS"
+      feePaymentAmount:
+        description: "The amount representing fees linked to this payment\n"
+        $ref: "#/definitions/Amount"
+    description: "Representation of a payment.\n"
+    example:
+      sourceWalletId: "Na5Dv6E"
+      amount:
+        currency: "USD"
+        value: "2.257"
+      feePaymentOption: "BEN"
+      executionDate: "2016-01-01"
+      priorityPaymentOption: "48H"
+      counterValue:
+        currency: "USD"
+        value: "2.257"
+      createdDate: "2016-01-01 00:00:00"
+      rate:
+        date: "2016-01-01 00:00:00"
+        currencyPair: "EURUSD"
+        coreAsk: "2.257"
+        appliedBid: "2.257"
+        coreBid: "2.257"
+        midMarket: "2.257"
+        appliedAsk: "2.257"
+      desiredExecutionDate: "2016-01-01"
+      externalBankAccountId: "Na5Dv6E"
+      feePaymentAmount:
+        currency: "USD"
+        value: "2.257"
+      id: "Na5Dv6E"
+      tag: "tag"
+      communication: "communication"
+      status: "planified"
+  PaymentOption:
+    type: "object"
+    properties:
+      paymentOption:
+        $ref: "#/definitions/PaymentOption_paymentOption"
+    description: "The representation of a payment option object. This object contains\
+      \ information about priorityPaymentOption and feePaymentOption for a payment.\n"
+    example:
+      paymentOption:
+        sourceWalletId: "Na5Dv6E"
+        options:
+        - minimumAmountTarget:
+            currency: "USD"
+            value: "2.257"
+          feePaymentOption: "BEN"
+          feeCost:
+            currency: "USD"
+            value: "2.257"
+          minimumAmountSource:
+            currency: "USD"
+            value: "2.257"
+          priorityCost:
+            currency: "USD"
+            value: "2.257"
+          priorityPaymentOption: "48H"
+        - minimumAmountTarget:
+            currency: "USD"
+            value: "2.257"
+          feePaymentOption: "BEN"
+          feeCost:
+            currency: "USD"
+            value: "2.257"
+          minimumAmountSource:
+            currency: "USD"
+            value: "2.257"
+          priorityCost:
+            currency: "USD"
+            value: "2.257"
+          priorityPaymentOption: "48H"
+        externalBankAccountId: "Na5Dv6E"
+  Trade:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the trade.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      appliedRate:
+        description: "The Object describing the rate of the trade.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      currencyPair:
+        description: "The six-digit code representing the pair of currency of the\
+          \ trade.\n"
+        $ref: "#/definitions/CurrencyPair"
+        x-regex: "^[A-Z]{6}$"
+        x-modifiers: []
+      sourceAmount:
+        description: "The amount to be debited from the source Wallet.\n"
+        $ref: "#/definitions/Amount"
+      deliveredAmount:
+        description: "The amount to be credited to the delivery wallet.\n"
+        $ref: "#/definitions/Amount"
+      createdDate:
+        description: "The creation date of the trade.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      deliveryDate:
+        description: "The delivery date of the trade.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "A custom wording for the trade.\n"
+        maxLength: 76
+    description: "Representation of a Trade.\n"
+    example:
+      deliveredAmount:
+        currency: "USD"
+        value: "2.257"
+      currencyPair: "EURUSD"
+      createdDate: "2016-01-01 00:00:00"
+      appliedRate: "2.257"
+      sourceAmount:
+        currency: "USD"
+        value: "2.257"
+      id: "Na5Dv6E"
+      tag: "tag"
+      deliveryDate: "2016-01-01"
+  FinancialMovement:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the transfer.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      bookingDate:
+        description: "The booking date of the transfer.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      valueDate:
+        description: "The value date of the transfer.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      orderingAccountNumber:
+        type: "string"
+        description: "The number referring the ordering account of the transfer.\n"
+        maxLength: 40
+      orderingCustomer:
+        type: "string"
+        description: "A free formatted String representing the ordering customer with\
+          \ it's name and it's address.\n"
+      orderingInstitution:
+        type: "string"
+        description: "A free formatted String representing the ordering institution\
+          \ with it's name and it's address.\n"
+      orderingAmount:
+        description: "The amount instructed by the ordering customer of the transfer.\n"
+        $ref: "#/definitions/Amount"
+      beneficiaryAccountNumber:
+        type: "string"
+        description: "The number referring the beneficiary account.\n"
+        maxLength: 40
+      beneficiaryCustomer:
+        type: "string"
+        description: "A free formatted String representing the beneficiary customer\
+          \ with it's name and it's address.\n"
+      beneficiaryInstitution:
+        type: "string"
+        description: "A free formatted String representing the beneficiary institution\
+          \ with it's name and it's address.\n"
+      beneficiaryAmount:
+        description: "The amount delivered credited in the beneficiary account.\n"
+        $ref: "#/definitions/Amount"
+      remittanceInformation:
+        type: "string"
+        description: "The communication field.\n"
+      chargesDetails:
+        type: "string"
+        description: "The charges details related to the transfer.\n"
+      exchangeRate:
+        type: "number"
+        format: "float"
+        description: "The exchange rate applied on the transfer.\n"
+      typeLabel:
+        type: "string"
+        description: "The type of the financial movement.\n"
+      internalReference:
+        type: "string"
+        description: "Internal Reference of the financial movement.\n"
+      description:
+        type: "string"
+        description: "Description of the financial movement.\n"
+    description: "Representation of a financial movement\n"
+    example:
+      orderingInstitution: "orderingInstitution"
+      beneficiaryAccountNumber: "beneficiaryAccountNumber"
+      orderingAmount:
+        currency: "USD"
+        value: "2.257"
+      chargesDetails: "chargesDetails"
+      description: "description"
+      internalReference: "internalReference"
+      valueDate: "2016-01-01"
+      beneficiaryCustomer: "beneficiaryCustomer"
+      orderingAccountNumber: "orderingAccountNumber"
+      remittanceInformation: "remittanceInformation"
+      exchangeRate: 0.8008282
+      orderingCustomer: "orderingCustomer"
+      bookingDate: "2016-01-01"
+      typeLabel: "typeLabel"
+      id: "Na5Dv6E"
+      beneficiaryInstitution: "beneficiaryInstitution"
+      beneficiaryAmount:
+        currency: "USD"
+        value: "2.257"
+  Rate:
+    type: "object"
+    properties:
+      currencyPair:
+        description: "The three-digit code used for the rates provided.\n"
+        $ref: "#/definitions/CurrencyPair"
+        x-regex: "^[A-Z]{6}$"
+        x-modifiers: []
+      midMarket:
+        description: "The average rate of the market between the bid and the ask rate.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      date:
+        description: "The date representing the last update on the update.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      coreAsk:
+        description: "The interbank ASK rate provided by the FX partner of IBANFIRST.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      coreBid:
+        description: "The interbank BID rate provided by the FX partner of IBANFIRST.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      appliedAsk:
+        description: "The interbank ASK rate applied for the transaction.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      appliedBid:
+        description: "The interbank BID rate applied for the transaction.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+    description: "Representation of a Rate.\n"
+    example:
+      date: "2016-01-01 00:00:00"
+      currencyPair: "EURUSD"
+      coreAsk: "2.257"
+      appliedBid: "2.257"
+      coreBid: "2.257"
+      midMarket: "2.257"
+      appliedAsk: "2.257"
+  Quote:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the quote.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      appliedRate:
+        description: "The Object describing the rate of the quote.\n"
+        $ref: "#/definitions/QuotedDecimal"
+        x-regex: "^((\\\\-){?})[0-9]{12}((\\\\.[0-9]{1-7}){?})$"
+        x-modifiers: []
+      currencyPair:
+        description: "The six-digit code representing the pair of currency of the\
+          \ Quote.\n"
+        $ref: "#/definitions/CurrencyPair"
+        x-regex: "^[A-Z]{6}$"
+        x-modifiers: []
+      sourceAmount:
+        description: "The amount to be debited from the source Wallet.\n"
+        $ref: "#/definitions/Amount"
+      deliveredAmount:
+        description: "The amount to be credited to the delivery wallet.\n"
+        $ref: "#/definitions/Amount"
+      createdDate:
+        description: "The creation date of the quote.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      deliveryDate:
+        description: "The delivery date of the quote.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+    description: "Representation of a quote.\n"
+    example:
+      deliveredAmount:
+        currency: "USD"
+        value: "2.257"
+      currencyPair: "EURUSD"
+      createdDate: "2016-01-01 00:00:00"
+      appliedRate: "2.257"
+      sourceAmount:
+        currency: "USD"
+        value: "2.257"
+      id: "Na5Dv6E"
+      deliveryDate: "2016-01-01"
+  Log:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the Log.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      createdAt:
+        description: "The Datetime when the log entry was created.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      closedAt:
+        description: "The Datetime when the log entry was closed.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      tokenNonce:
+        type: "string"
+        description: "The nonce used in the HTTP header to authenticate the request.\n"
+      remoteAddress:
+        type: "string"
+        description: "The IP address of the request's emiter.\n"
+        maxLength: 15
+      requestMethod:
+        type: "string"
+        description: "The HTTP method of the request\n"
+        maxLength: 6
+      uriRequested:
+        type: "string"
+        description: "The Universal Resource Identifier given for this request.\n"
+      parametersGiven:
+        type: "string"
+        description: "The optional parameters *(e.g. after the ?)* given for this\
+          \ request.\n"
+      requestBody:
+        type: "string"
+        description: "The HTTP request body.\n"
+      httpResponseCode:
+        type: "number"
+        format: "int"
+        description: "The HTTP response code.\n"
+      responseBody:
+        type: "string"
+        description: "The text sent by the server as a result for the request.\n"
+      restErrorTypeId:
+        type: "number"
+        format: "integer"
+        description: "If there is an error during the processing the request, this\
+          \ id could be used to find this error.\n"
+      login:
+        type: "string"
+        description: "The login used for the request.\n"
+      legalname:
+        type: "string"
+        description: "The legal name of the client used for the request.\n"
+    description: "Representation of a log.\n"
+    example:
+      responseBody: "responseBody"
+      legalname: "legalname"
+      requestMethod: "requestMethod"
+      restErrorTypeId: 6.02745618307040320615897144307382404804229736328125
+      tokenNonce: "tokenNonce"
+      login: "login"
+      createdAt: "2016-01-01 00:00:00"
+      parametersGiven: "parametersGiven"
+      uriRequested: "uriRequested"
+      requestBody: "requestBody"
+      httpResponseCode: 0.80082819046101150206595775671303272247314453125
+      id: "Na5Dv6E"
+      closedAt: "2016-01-01 00:00:00"
+      remoteAddress: "remoteAddress"
+  ProcessResult:
+    type: "object"
+    properties:
+      result:
+        type: "boolean"
+        description: "The result of the operation. `true` if the operation is successful,\
+          \ else `false`\n"
+    description: "As some of our process just need to send you back the confirmation\
+      \ that this process is successful, the API will send you a ProcessResult.\n"
+    example:
+      result: true
+  VirtualIBAN:
+    type: "object"
+    properties:
+      IBAN:
+        type: "string"
+        description: "The virtual IBAN requested.\n"
+        maxLength: 16
+    description: "Representation of a virtual IBAN.\n"
+  Error:
+    type: "object"
+    properties:
+      errorCode:
+        type: "number"
+        format: "int"
+        description: "The code referring the error.\n"
+      errorType:
+        type: "string"
+        description: "A short description identifying a general category for the error\
+          \ that occurred.\n"
+      link:
+        type: "string"
+        description: "An hyperlink to access the page that describes more accurately\
+          \ the error.\n"
+    description: "Representation of an error.\n"
+  Document:
+    type: "object"
+    properties:
+      id:
+        description: "The unique identifier of the document.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      name:
+        type: "string"
+        description: "The name of the document.\n"
+      type:
+        type: "string"
+        description: "The type of the document.\n"
+      createdDate:
+        description: "The creation date of the ducument.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      lastOpennedDate:
+        description: "The date when the document was last openned.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      mimeType:
+        type: "string"
+        description: "The MIME type of the document.\n"
+      link:
+        type: "string"
+        description: "The one-time link to access or download the document.\n"
+    description: "Representation of a document.\n"
+    example:
+      createdDate: "2016-01-01 00:00:00"
+      name: "name"
+      lastOpennedDate: "2016-01-01 00:00:00"
+      link: "link"
+      id: "Na5Dv6E"
+      mimeType: "mimeType"
+      type: "type"
+  UserInformation:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        description: "The username of the user.\n"
+      pass:
+        type: "string"
+        description: "The encrypted pass of the user.\n"
+      civility:
+        type: "string"
+        description: "The civility of the user.\n"
+      firstname:
+        type: "string"
+        description: "The first name of the user.\n"
+      lastname:
+        type: "string"
+        description: "The last name of the user.\n"
+      entityname:
+        type: "string"
+        description: "The the user's company's name.\n"
+      roles:
+        type: "array"
+        description: "An array describing the roles of the user.\n"
+        items:
+          type: "string"
+          description: "A string containing the name of the role of the user.\n"
+    description: "Representation of a set of user informations got by the Authentication\
+      \ service.\n"
+    example:
+      firstname: "firstname"
+      civility: "civility"
+      pass: "pass"
+      roles:
+      - "roles"
+      - "roles"
+      entityname: "entityname"
+      username: "username"
+      lastname: "lastname"
+  ID:
+    type: "string"
+    pattern: "^[A-Za-z0-9]{*}$"
+    format: "^[A-Za-z0-9]{*}$"
+    description: "A String representing the id of an object. This string contains\
+      \ alpha-numeric characters, including the capital ones.\n"
+    example: "Na5Dv6E"
+  QuotedDecimal:
+    type: "string"
+    pattern: "^((\\-){?})[0-9]{12}((\\.[0-9]{1-7}){?})$"
+    format: "^((\\-){?})[0-9]{12}((\\.[0-9]{1-7}){?})$"
+    description: "A String representing a formatted floating number.\n"
+    example: "2.257"
+  Currency:
+    type: "string"
+    pattern: "^[A-Z]{3}$"
+    format: "^[A-Z]{3}$"
+    description: "A String representing the Three-digit ISO 4217 Currency Code of\
+      \ a currency. This String only contains capitalized letters.\n"
+    example: "USD"
+  Date:
+    type: "string"
+    pattern: "^[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}$"
+    format: "^[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}$"
+    description: "A String representing a date by its year, month and day in month.\n\
+      \    \n"
+    example: "2016-01-01"
+  Datetime:
+    type: "string"
+    pattern: "^((19[0,99]|2[0-9]{3})\\-(0[1-9]|1[012])\\-([012][0-9]|3[01])\\ ([01][0-9]|2[0-3])\\\
+      :([0-5][0-9])\\:([0-5][0-9]))$"
+    format: "^((19[0,99]|2[0-9]{3})\\-(0[1-9]|1[012])\\-([012][0-9]|3[01])\\ ([01][0-9]|2[0-3])\\\
+      :([0-5][0-9])\\:([0-5][0-9]))$"
+    description: "A String representing a date by its year, month, day in month, hour,\
+      \ minute and second.\n"
+    example: "2016-01-01 00:00:00"
+  CurrencyPair:
+    type: "string"
+    pattern: "^[A-Z]{6}$"
+    format: "^[A-Z]{6}$"
+    description: "A String representing two concatenated Three-digit ISO 4217 Currency\
+      \ Code of a currency. This String only contains capitalized letters.\n    \n\
+      \    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n  \
+      \  \n    \n    \n    \n"
+    example: "EURUSD"
+  inline_response_200:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the wallet.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "The custom wording of the wallet.\n"
+      currency:
+        description: "The three-digit code identifying the currency of the wallet.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      bookingAmount:
+        description: "The total amount booked on the account.\n"
+        $ref: "#/definitions/Amount"
+      valueAmount:
+        description: "The total amount available in the wallet.\n"
+        $ref: "#/definitions/Amount"
+      dateLastFinancialMovement:
+        description: "The date of the last financial move in this wallet.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+    description: "A shorter version of the wallet\n"
+    example:
+      dateLastFinancialMovement: "2016-01-01"
+      valueAmount:
+        currency: "USD"
+        value: "2.257"
+      currency: "USD"
+      id: "Na5Dv6E"
+      tag: "tag"
+      bookingAmount:
+        currency: "USD"
+        value: "2.257"
+  wallet:
+    type: "object"
+    required:
+    - "currency"
+    properties:
+      currency:
+        description: "A three-digit code specifying the wallet currency. \n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "Custom data.\n"
+      holder:
+        description: "The holder of the wallet.\n"
+        $ref: "#/definitions/Holder"
+  inline_response_200_1:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the wallet.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      balance:
+        description: "An object representing the balance of the account.\n"
+        $ref: "#/definitions/Balance"
+    example:
+      balance:
+        valueAmount:
+          currency: "USD"
+          value: "2.257"
+        closingDate: "2016-01-01"
+        bookingAmount:
+          currency: "USD"
+          value: "2.257"
+      id: "Na5Dv6E"
+  inline_response_200_2:
+    type: "object"
+    properties:
+      id:
+        description: "The ID refering the financial movement\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      bookingDate:
+        description: "The booking Datetime of the financial movement.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      walletId:
+        description: "The wallet ID on which the financial movement is.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      valueDate:
+        description: "The value Datetime of the financial movement.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      amount:
+        description: "An object reprsenting the amount concerned by the financial\
+          \ movement.\n"
+        $ref: "#/definitions/Amount"
+    example:
+      walletId: "Na5Dv6E"
+      amount:
+        currency: "USD"
+        value: "2.257"
+      bookingDate: "2016-01-01 00:00:00"
+      id: "Na5Dv6E"
+      valueDate: "2016-01-01"
+  account:
+    type: "object"
+    required:
+    - "accountNumber"
+    - "currency"
+    - "holder"
+    - "holderBank"
+    properties:
+      accountNumber:
+        type: "string"
+        description: "The recipient account number or Iban.\n"
+        maxLength: 50
+      currency:
+        description: "A three digit code specifying the account currency.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      holderBank:
+        description: "The recipient bank details, holding the account.\n"
+        $ref: "#/definitions/HolderBank"
+      holder:
+        description: "The recipient details, owner of the account. **Caution :** For\
+          \ this part of the request, the \"street\" and \"city\" fields are required.\
+          \ The \"state\" field could be required if the country needs it.\n"
+        $ref: "#/definitions/Holder"
+      tag:
+        type: "string"
+        description: "Custom Data.\n"
+        maxLength: 50
+      correspondentBic:
+        type: "string"
+        description: "The intermediary bank identifier code.\n"
+        maxLength: 50
+  payment:
+    type: "object"
+    required:
+    - "amount"
+    - "desiredExecutionDate"
+    - "externalBankAccountId"
+    - "feeCurrency"
+    - "feePaymentOption"
+    - "priorityPaymentOption"
+    - "sourceWalletId"
+    properties:
+      sourceWalletId:
+        description: "The code identifying the wallet from which the payment must\
+          \ be processed.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      externalBankAccountId:
+        description: "The code identifying the recipient account.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      amount:
+        description: "Amount to be sent.\n**Caution.** The currency of the amount\
+          \ sent must be equal to the currency of the beneficiary account.\n"
+        $ref: "#/definitions/Amount"
+      desiredExecutionDate:
+        description: "The initial execution date of your payment.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      feeCurrency:
+        description: "A three digit code representing the currency related to the\
+          \ charges applied on your payment.\n"
+        $ref: "#/definitions/Currency"
+        x-regex: "^[A-Z]{3}$"
+        x-modifiers: []
+      feePaymentOption:
+        type: "string"
+        description: "A code representing the charges option to be applied to this\
+          \ payment.\n"
+        enum:
+        - "BEN"
+        - "OUR"
+        - "SHARE"
+        - "SEPA"
+        - "DSP"
+        - "RTGS"
+      priorityPaymentOption:
+        type: "string"
+        description: "A code representing whether this payment as a standard priority,\
+          \ or a priority treatment in IBANFIRST an correspondent bank systems.\n"
+        enum:
+        - "48H"
+        - "24H"
+        - "1H"
+      tag:
+        type: "string"
+        description: "A custom reference that you want to be related to this payment\
+          \ in the system. This tag is not communicated to the beneficiary.\n"
+        maxLength: 50
+      communication:
+        type: "string"
+        description: "A Free format string representing the communication for the\
+          \ beneficiary.\n"
+        maxLength: 76
+  proofOfTransaction:
+    type: "object"
+    required:
+    - "documentType"
+    - "file"
+    - "tag"
+    properties:
+      documentType:
+        type: "string"
+        description: "The type of document to submit for a transaction. \n"
+        enum:
+        - "invoice"
+        - "identity"
+      tag:
+        type: "string"
+        description: "The name of the document to be attached.\n"
+      file:
+        type: "string"
+        description: "The binary content of the file, encoded with a base64 algorithm.\n"
+  quote:
+    type: "object"
+    required:
+    - "amount"
+    - "currencyPair"
+    - "deliveryDate"
+    - "side"
+    properties:
+      currencyPair:
+        description: "The currency pair representing the quote requessted.\n"
+        $ref: "#/definitions/CurrencyPair"
+        x-regex: "^[A-Z]{6}$"
+        x-modifiers: []
+      side:
+        type: "string"
+        description: "The side repressenting the quote. `S` to sell and `B` to buy.\n"
+        enum:
+        - "B"
+        - "S"
+      amount:
+        description: "The amount to trade.\n"
+        $ref: "#/definitions/Amount"
+      deliveryDate:
+        description: "Initial delivery date of the quote.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+  trade:
+    type: "object"
+    required:
+    - "amount"
+    - "currencyPair"
+    - "deliveryDate"
+    - "side"
+    properties:
+      currencyPair:
+        description: "The currency pair representing the trade requessted.\n"
+        $ref: "#/definitions/CurrencyPair"
+        x-regex: "^[A-Z]{6}$"
+        x-modifiers: []
+      side:
+        type: "string"
+        description: "The side repressenting the trade. `S` to sell and `B` to buy.\n"
+        enum:
+        - "B"
+        - "S"
+      amount:
+        description: "The amount to trade.\n"
+        $ref: "#/definitions/Amount"
+      deliveryDate:
+        description: "Initial delivery date of the trade.\n"
+        $ref: "#/definitions/Date"
+        x-regex: "^[0-9]{4}\\\\-[0-9]{2}\\\\-[0-9]{2}$"
+        x-modifiers: []
+      sourceWalletId:
+        description: "The code identifying the account to be debited of the amount\
+          \ of currency sold. **Usable only if you have more than one account on the\
+          \ source currency.**\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      deliveryWalletId:
+        description: "The code identifying the destination account of the amount of\
+          \ currencies bought. **Usable only if you have more than one account on\
+          \ the target currency.**\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      tag:
+        type: "string"
+        description: "A custom wording for the trade.\n"
+        maxLength: 76
+  inline_response_200_3:
+    type: "object"
+    properties:
+      id:
+        description: "The code identifying the document.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      name:
+        type: "string"
+        description: "The name of the document.\n"
+      type:
+        type: "string"
+        description: "Teh type of the document.\n"
+      createdDate:
+        description: "The creation date of the document.\n"
+        $ref: "#/definitions/Datetime"
+        x-regex: "^((19[0,99]|2[0-9]{3})\\\\-(0[1-9]|1[012])\\\\-([012][0-9]|3[01])\\\
+          \\ ([01][0-9]|2[0-3])\\\\:([0-5][0-9])\\\\:([0-5][0-9]))$"
+        x-modifiers: []
+      link:
+        type: "string"
+        description: "The one-time link to the document.\n"
+    example:
+      createdDate: "2016-01-01 00:00:00"
+      name: "name"
+      link: "link"
+      id: "Na5Dv6E"
+      type: "type"
+  documentToUpload:
+    type: "object"
+    required:
+    - "file"
+    - "tag"
+    properties:
+      tag:
+        type: "string"
+        description: "The name of the document to be attached.\n"
+      file:
+        type: "string"
+        description: "The binary content of the file, encoded with a base64 algorithm.\n"
+  inline_response_default:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        description: "The description of the error\n"
+    description: "Container of the error message.\n"
+  PaymentOption_paymentOption_options:
+    type: "object"
+    properties:
+      priorityPaymentOption:
+        type: "string"
+        description: "The piority concerning the departure of the payment."
+        enum:
+        - "48H"
+        - "24H"
+        - "1H"
+      feePaymentOption:
+        type: "string"
+        description: "The fee option"
+        enum:
+        - "BEN"
+        - "OUR"
+        - "SHARE"
+        - "SEPA"
+        - "DSP"
+        - "RTGS"
+      priorityCost:
+        description: "An amount object rerpesenting the cost linked to the speed of\
+          \ the departure of the payment."
+        $ref: "#/definitions/Amount"
+      feeCost:
+        description: "An amount object rerpesenting the cost linked to the type of\
+          \ the fee for the payment."
+        $ref: "#/definitions/Amount"
+      minimumAmountSource:
+        description: "An amount object rerpesenting the minimum amount from the source\
+          \ account to use this fee option."
+        $ref: "#/definitions/Amount"
+      minimumAmountTarget:
+        description: "An amount object rerpesenting the minimum amount for the beneficiary\
+          \ account to use this fee option."
+        $ref: "#/definitions/Amount"
+    example:
+      minimumAmountTarget:
+        currency: "USD"
+        value: "2.257"
+      feePaymentOption: "BEN"
+      feeCost:
+        currency: "USD"
+        value: "2.257"
+      minimumAmountSource:
+        currency: "USD"
+        value: "2.257"
+      priorityCost:
+        currency: "USD"
+        value: "2.257"
+      priorityPaymentOption: "48H"
+  PaymentOption_paymentOption:
+    type: "object"
+    properties:
+      externalBankAccountId:
+        description: "The code identifying the beneficiary account.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      sourceWalletId:
+        description: "The code identifying the wallet the payment will be processed.\n"
+        $ref: "#/definitions/ID"
+        x-regex: "^[A-Za-z0-9]{*}$"
+        x-modifiers: []
+      options:
+        type: "array"
+        description: "An array containing all priorityPaymentOptions for the payment,\
+          \ and then, all the feePaymentOptions for this priorityPaymentOptions\n"
+        items:
+          $ref: "#/definitions/PaymentOption_paymentOption_options"
+    example:
+      sourceWalletId: "Na5Dv6E"
+      options:
+      - minimumAmountTarget:
+          currency: "USD"
+          value: "2.257"
+        feePaymentOption: "BEN"
+        feeCost:
+          currency: "USD"
+          value: "2.257"
+        minimumAmountSource:
+          currency: "USD"
+          value: "2.257"
+        priorityCost:
+          currency: "USD"
+          value: "2.257"
+        priorityPaymentOption: "48H"
+      - minimumAmountTarget:
+          currency: "USD"
+          value: "2.257"
+        feePaymentOption: "BEN"
+        feeCost:
+          currency: "USD"
+          value: "2.257"
+        minimumAmountSource:
+          currency: "USD"
+          value: "2.257"
+        priorityCost:
+          currency: "USD"
+          value: "2.257"
+        priorityPaymentOption: "48H"
+      externalBankAccountId: "Na5Dv6E"

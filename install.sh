@@ -18,8 +18,6 @@ source bin/activate
 echo "Download swagger codegen jar" 
 /usr/bin/wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.66/swagger-codegen-cli-3.0.66.jar -O swagger-codegen-cli.jar
 
-echo "Clone orness project"
-git clone https://github.com/ORNESSLAB/happybanfirst_v2.0 -b unreleased
 echo "Generate ibanfirst client api"
 java -jar swagger-codegen-cli.jar generate -i happybanfirst_v2.0/swagger.yaml -l python -o ibandir
 cd ibandir

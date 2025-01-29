@@ -25,6 +25,7 @@ echo "change swagger-client to ibanfirst_client in entire project"
 mv swagger_client ibanfirst_client
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
+sed -i 's/swagger-client/ibanfirst-client/g' setup.py
 echo "install required modules"
 pip install -r requirements.txt
 echo "set up the client api"

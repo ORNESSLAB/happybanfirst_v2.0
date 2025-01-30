@@ -1,0 +1,50 @@
+{
+  "wallets": [
+                {
+                        "id": "NjczODE",
+                        "tag": "86f7e437faa5a7f",
+                        "currency": "EUR",
+                        "bookingAmount": {
+                                "value": "1320.50",
+                                "currency": "EUR"
+                        },
+                        "valueAmount": {
+                                "value": "1320.50",
+                                "currency": "EUR"
+                        },
+                        "dateLastFinancialMovement": "2020-03-26 15:08:25"
+                },
+                {
+                        "id": "NjczODM",
+                        "tag": "86f7e437faa5a7f",
+                        "currency": "USD",
+                        "bookingAmount": {
+                                "value": "500.00",
+                                "currency": "USD"
+                        },
+                        "valueAmount": {
+                                "value": "500.00",
+                                "currency": "USD"
+                        },
+                        "dateLastFinancialMovement": "2020-03-26 15:08:25"
+                },
+                {
+                        "id": "OTg1OTE",
+                        "tag": "86f7e437faa5a7f",
+                        "currency": "CAD",
+                        "bookingAmount": {
+                                "value": "0.00",
+                                "currency": "CAD"
+                        },
+                        "valueAmount": {
+                                "value": "0.00",
+                                "currency": "CAD"
+                        },
+                        "dateLastFinancialMovement": "2018-10-01 08:17:10"
+                }
+        ],
+        "metadata": {
+                "per_page": "50",
+                "page": "1"
+        }
+}

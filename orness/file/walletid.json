@@ -1,0 +1,88 @@
+{
+        "wallet":[ {
+                "id": "NjczODM",
+                "currency": "USD",
+                "tag": "86f7e437faa5a7f",
+                "status": "authorized",
+                "accountNumber": "BE17914001921521",
+                "correspondentBank": {
+                        "bic": "BBRUBEBBXXX",
+                        "name": "ING BELGIUM NV/SA (FORMERLY BANK BRUSSELS LAMBERT SA), BRUSSELS",
+                        "address": {
+                                "street": "AVENUE MARNIX 24  ",
+                                "postCode": "1000",
+                                "city": "BRUSSELS",
+                                "province": null,
+                                "country": "BE"
+                        }
+                },
+                "holderBank": {
+                        "bic": "FXBBBEBBXXX",
+                        "clearingCodeType": "",
+                        "clearingCode": "914",
+                        "name": "IBANFIRST",
+                        "address": {
+                                "street": "AVENUE LOUISE 350  ",
+                                "postCode": "1050",
+                                "city": "BRUSSELS",
+                                "province": null,
+                                "country": "BE"
+                        }
+                },
+                "holder": {
+                        "name": "TEST API ORNESS",
+                        "type": "corporate",
+                        "address": {
+                                "street": "f5a74c96b0553f4",
+                                "postCode": "ead8f",
+                                "city": "666fe57372",
+                                "province": null,
+                                "country": "FR"
+                        }
+                }
+        },
+	
+	{
+                "id": "NjczODE",
+                "currency": "EUR",
+                "tag": "86f7e437faa5a7f",
+                "status": "authorized",
+                "accountNumber": "BE39914001921319",
+                "correspondentBank": {
+                        "bic": "BBRUBEBBXXX",
+                        "name": "ING BELGIUM NV/SA (FORMERLY BANK BRUSSELS LAMBERT SA), BRUSSELS",
+                        "address": {
+                                "street": "AVENUE MARNIX 24  ",
+                                "postCode": "1000",
+                                "city": "BRUSSELS",
+                                "province": null,
+                                "country": "BE"
+                        }
+                },
+                "holderBank": {
+                        "bic": "FXBBBEBBXXX",
+                        "clearingCodeType": "",
+                        "clearingCode": "914",
+                        "name": "IBANFIRST",
+                        "address": {
+                                "street": "AVENUE LOUISE 350  ",
+                                "postCode": "1050",
+                                "city": "BRUSSELS",
+                                "province": null,
+                                "country": "BE"
+                        }
+                },
+                "holder": {
+                        "name": "TEST API ORNESS",
+                        "type": "corporate",
+                        "address": {
+                                "street": "f5a74c96b0553f4",
+                                "postCode": "ead8f",
+                                "city": "666fe57372",
+                                "province": null,
+                                "country": "FR"
+                        }
+                }
+        }
+	]
+}

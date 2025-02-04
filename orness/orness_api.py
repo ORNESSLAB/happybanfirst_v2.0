@@ -1,23 +1,46 @@
-import ibanfirst_client
-import orness
+
 from ibanfirst_client.api_client import ApiClient
 from ibanfirst_client.api.wallets_api import WalletsApi
-from ibanfirst_client.rest import ApiException
-from orness.header_generator import IBanFirst
 from ibanfirst_client.api.payments_api import PaymentsApi
 from ibanfirst_client.api.external_bank_account_api import ExternalBankAccountApi
 from orness.config import Config
 from orness.jsonvalidator import valid
-api = ApiClient(configuration=Config())
+
+API = ApiClient(configuration=Config())
+
+
+
 
 class IbWalletApi(WalletsApi):
+    """_IbWalletApi operations  
+    """
     def __init__(self):
+        """
+        Constructor for the class.
+        It sets the variables from the environment variables.
+        """
         super().__init__()
-        self.api_client = api
-        header = self.api_client.configuration.get_header()
-        self.api_client.set_default_header('X-WSSE', header['X-WSSE'])
+        header = API.configuration.get_header()
+        API.set_default_header('X-WSSE', header['X-WSSE'])
+        self.api_client = API
 
     def wallets_get(self, **kwargs):
+        """Get wallet list  # noqa: E501
+
+        With the Retrieve wallet list service, you can list obtain the list of all wallet account hold with IBANFIRST. The object return in the Array is a simplified version of the Wallet providing you the main information on the wallet without any additional request.    # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+        >>> thread = api.wallets_get(async_req=True)
+        >>> result = thread.get()
+
+        :param async_req bool
+        :param str page: Index of the page. 
+        :param str per_page: Inumber of items returned. 
+        :param str sort: A string representing the rendering order of objects. For wallet objects, the sorting is made by wallet's creation date. 
+        :return: list[InlineResponse200]
+                If the method is called asynchronously,
+                returns the request thread.
+        """
         kwargs['_return_http_data_only'] = True
         kwargs['_preload_content'] = False
         if kwargs.get('async_req'):
@@ -50,6 +73,7 @@ class IbWalletApi(WalletsApi):
             return data
         
     def wallets_post(self, wallet, **kwargs):  # noqa: E501
+
         """Submit a new wallet  # noqa: E501
 
         This request allows you to submit a new wallet.   **Caution :** The holder object in the parameters will only be considered if you suscribed to the `Multi account per currency with holder` wallet option.   # noqa: E501
@@ -67,19 +91,20 @@ class IbWalletApi(WalletsApi):
         
         kwargs['_return_http_data_only'] = True
         kwargs['_preload_content'] = False
+        
         if kwargs.get('async_req'):
             return self.wallets_post_with_http_info(wallet, **kwargs)  # noqa: E501
         else:
             (data) = self.wallets_post_with_http_info(wallet, **kwargs)  # noqa: E501
             return data
+        
 
 class IbPaymentsApi(PaymentsApi):
     def __init__(self):
-        api = ApiClient(configuration=Config())
         super().__init__()
-        self.api_client = api
-        header = self.api_client.configuration.get_header()
-        self.api_client.set_default_header('X-WSSE', header['X-WSSE'])
+        header = API.configuration.get_header()
+        API.set_default_header('X-WSSE', header['X-WSSE'])
+        self.api_client = API
     
     def payments_id_get(self, id, **kwargs):
         kwargs['_return_http_data_only'] = True
@@ -121,7 +146,10 @@ class IbPaymentsApi(PaymentsApi):
     def payments_post(self, payment, **kwargs):  # noqa: E501
         """Submit a payment  # noqa: E501
 
-        You can use this request in order to schedule a new payment.   You may want to use the GET `/payments/options/-{walletId}/-{externalBankAccountId}/` before calling this service to get proper values for `feePaymentOption` and `priorityPaymentOption` concerning your payment.  You can also use this request to get the cost of a payment.   # noqa: E501
+        You can use this request in order to schedule a new payment.  
+        You may want to use the GET `/payments/options/-{walletId}/-{externalBankAccountId}/` 
+        before calling this service to get proper values for `feePaymentOption` and `priorityPaymentOption` 
+        concerning your payment.  You can also use this request to get the cost of a payment.   # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.payments_post(payment, async_req=True)
@@ -142,7 +170,7 @@ class IbPaymentsApi(PaymentsApi):
             (data) = self.payments_post_with_http_info(payment, **kwargs)  # noqa: E501
             return data
     def check_if_wallet_exist(self, wallet_id:str)-> bool:
-        api = IbWalletsApi()
+        api = IbWalletApi()
         return True  if api.wallets_id_get(wallet_id) else False
 
     def check_if_external_bank_account_exist(self, external_bank_account_id):
@@ -152,7 +180,10 @@ class IbPaymentsApi(PaymentsApi):
     def payments_options_wallet_id_external_bank_account_id_get(self, wallet_id, external_bank_account_id, **kwargs):  # noqa: E501
         """Get payment options for a wallet and an external bank account  # noqa: E501
 
-        Before doing any payments, you may use this request to get payments options for the payment you want to do.  This will give you the `priorityPaymentOption` and `feePaymentOption` available for the given wallet and external bank account. You will also get fee cost for each `priorityPaymentOption` and `feePaymentOption` combinations, and minimal source and target amount to use this combination.   # noqa: E501
+        Before doing any payments, you may use this request to get payments options for the payment you want to do. 
+        This will give you the `priorityPaymentOption` and `feePaymentOption` available for the given wallet and 
+        external bank account. You will also get fee cost for each `priorityPaymentOption` and `feePaymentOption` 
+        combinations, and minimal source and target amount to use this combination.   # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
         >>> thread = api.payments_options_wallet_id_external_bank_account_id_get(wallet_id, external_bank_account_id, async_req=True)
@@ -167,19 +198,19 @@ class IbPaymentsApi(PaymentsApi):
         """
         kwargs['_preload_content'] = False
         kwargs['_return_http_data_only'] = True
-        if kwargs.get('async_req'):
-            return self.payments_options_wallet_id_external_bank_account_id_get_with_http_info(wallet_id, external_bank_account_id, **kwargs)  # noqa: E501
-        else:
-            (data) = self.payments_options_wallet_id_external_bank_account_id_get_with_http_info(wallet_id, external_bank_account_id, **kwargs)  # noqa: E501
-            return data
+        if self.check_if_external_bank_account_exist(external_bank_account_id) and self.check_if_wallet_exist(wallet_id):
+            if kwargs.get('async_req'):
+                return self.payments_options_wallet_id_external_bank_account_id_get_with_http_info(wallet_id, external_bank_account_id, **kwargs)  # noqa: E501
+            else:
+                (data) = self.payments_options_wallet_id_external_bank_account_id_get_with_http_info(wallet_id, external_bank_account_id, **kwargs)  # noqa: E501
+                return data
 
 class IbExternalBankAccountApi(ExternalBankAccountApi):
     def __init__(self):
             super().__init__()
-            self.api_client = api
-            
-            header = self.api_client.configuration.get_header()
-            self.api_client.set_default_header('X-WSSE', header['X-WSSE'])
+            header = API.configuration.get_header()
+            API.set_default_header('X-WSSE', header['X-WSSE'])
+            self.api_client = API
             
     def external_bank_accounts_get(self, **kwargs):
         """Get external bank accounts list  # noqa: E501
@@ -235,6 +266,5 @@ if __name__ == "__main__":
     #pay = IbPaymentsApi()
     tt = IbWalletApi()
     to = IbExternalBankAccountApi()
-    print("Same" if id(to.api_client) == id(to.api_client) else 'niet!')
-    print(to.external_bank_accounts_id_get(id='Njc1NzI').json())
+    print("Same" if id(to.api_client.configuration.host) == id(to.api_client.configuration.host) else 'niet!')
 

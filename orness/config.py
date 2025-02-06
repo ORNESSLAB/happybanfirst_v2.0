@@ -30,7 +30,9 @@ class Config(Conf):
 
         :return: A dictionary containing the WSSE header.
         """
-        return IBanFirst(user_id=os.getenv('IB_USERNAME'), password=os.getenv('IB_PASSWORD')).generate_header()
+        header = IBanFirst(user_id=os.getenv('IB_USERNAME'), password=os.getenv('IB_PASSWORD')).generate_header()
+        header['User-Agent'] = "Orness/1.0.0/python"
+        return header
         #return IBanFirst(user_id=self.username, password=self.password).generate_header()
 
 

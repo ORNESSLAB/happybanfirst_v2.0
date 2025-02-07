@@ -17,7 +17,7 @@ mv swagger_client ibanfirst_client
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
 sed -i 's/swagger-client/Orness_client/g' setup.py
-echo -e 'python-dotenv => 1.0.1 \njsonschema >= 4.23.0 \npandas \nopenpyxl == 3.1.5 \ncountry-converter == 0.7.2' \npprint >> requirements.txt
+echo -e 'python-dotenv => 1.0.1 \njsonschema >= 4.23.0 \npandas \nopenpyxl == 3.1.5 \ncountry-converter == 0.7.2\npprint' >> requirements.txt
 touch .env 
 echo -e "IB_USERNAME=\nIB_PASSWORD=\nIB_HOST=" >> .env
 echo "install required modules"

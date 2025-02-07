@@ -1,0 +1,29 @@
+{
+  "sourceWalletId": "NjczODE",
+  "externalBankAccountId": "NjczODA",
+  "amount": {
+    "value": "2.257",
+    "currency": "USD"
+  },
+  "desiredExecutionDate": "2052-02-05",
+  "feeCurrency": "USD",
+  "feePaymentOption": "BEN",
+  "priorityPaymentOption": "1H",
+  "tag": "string",
+  "communication": "string"
+}
+{  "currency": "EUR",
+  "tag": "",
+  "holder": {
+    "name": "BEKA",
+    "type": "Individual",
+    "address": {
+      "street": "14 rue Rene descartes",
+      "postCode": "69000.0",
+      "city": "Lyon",
+      "province": "Rhônes",
+      "country": "FR"
+    }
+  }
+}
+

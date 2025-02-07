@@ -3,27 +3,23 @@
 import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
-from datetime import datetime
+import country_converter as coco
 import pandas as pd
 
 
-def valid(json_file_dir:str, json_schema_file_dir:str):
+def valid(json_data_to_check: dict, json_schema_file_dir: str) -> bool:
     try:
-
-        with open(json_file_dir) as f:
-            doc = json.load(f)
-
         with open(json_schema_file_dir) as f:
-            sch = json.load(f)
-
+            schema = json.load(f)
+        
         try:
-            validate(instance=doc, schema=sch)
-            return 1
-        except ValidationError as er:
-            return 0
+            validate(instance=json_data_to_check, schema=schema)
+            return True
+        except ValidationError:
+            return False
 
-    except Exception as er:
-        raise
+    except Exception as e:
+        raise e
 
 def mapping_wallet_values(data):
     wallet = data['wallet']
@@ -109,7 +105,7 @@ def mapping_payment_values(json_data:str):
     payment['counterValue_currency'] = counterValue_currency
     return payment
 
-def mapping_payment_submit(excel_data:list) -> dict:
+def mapping_payment_submit(excel_data:dict) -> dict:
     """
     Mapping function for payment submission.
     
@@ -137,17 +133,30 @@ def mapping_payment_submit(excel_data:list) -> dict:
     payment_submit : dict
         A dictionary containing the payment information.
     """
-    excel_data = excel_data[0]
+
     payment_submit = {}
     payment_submit['externalBankAccountId'] = excel_data['Destinataire']
     payment_submit['sourceWalletId'] = excel_data['Compte']
     payment_submit['amount'] = {'value':excel_data['montant'], 'currency':excel_data['devise']}
-    payment_submit['desiredExecutionDate'] = pd.to_datetime(excel_data['date'], unit='d') 
+    payment_submit['desiredExecutionDate'] = pd.to_datetime(excel_data['date'], format='%Y-%m-%d').strftime('%Y-%m-%d') #excel_data['date']
     payment_submit['feeCurrency'] = excel_data['devise']
        
-    payment_submit['tag'] = excel_data['tag']
-    payment_submit['communication'] = excel_data['commentaire']
+    payment_submit['tag'] = excel_data['tag'] if excel_data['tag'] else ''
+    payment_submit['communication'] = excel_data['commentaire'] if excel_data['commentaire'] else ''
     return payment_submit
 
-def mapping_wallets_get(data):
-    pass
+def mapping_wallets_submit(excel_data:dict) -> dict:
+    wallet_submit = {}
+    wallet_submit["currency"] = excel_data['devise'] if excel_data['devise'] else ''
+    wallet_submit["tag"] = excel_data['tag'] if excel_data['tag'] else ''
+    wallet_submit["holder"] = {}
+    wallet_submit["holder"]["name"] = excel_data['nom'] if excel_data['nom'] else ''
+    wallet_submit["holder"]["type"] = excel_data['type'].capitalize() if excel_data['type'] else ''
+    wallet_submit["holder"]["address"] = {}
+    wallet_submit["holder"]["address"]["street"] = excel_data['rue'] if excel_data['rue'] else ''
+    wallet_submit["holder"]["address"]["postCode"] = excel_data['code postal'] if excel_data['code postal'] else ''
+    wallet_submit["holder"]["address"]["city"] = excel_data['ville'] if excel_data['ville'] else ''
+    wallet_submit["holder"]["address"]["province"] = excel_data['province'] if excel_data['province'] else ''
+    wallet_submit["holder"]["address"]["country"] = coco.convert(excel_data['pays'], to='ISO2') if excel_data['pays'] else ''
+    return wallet_submit
+    

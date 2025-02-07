@@ -1,0 +1,49 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "sourceWalletId": {
+            "type": "string"
+        },
+        "externalBankAccountId": {
+            "type": "string"
+        },
+        "amount": {
+            "value": {
+                "type": "number"
+            },
+            "currency": {
+                "type": "string"
+            }
+        },
+        "desiredExecutionDate": {
+            "type": "string",
+            "format": "date"
+        },
+        
+        "feeCurrency": {
+            "type": "string"
+        },
+        "feePaymentOption": {
+            "type": "string"
+        },
+        "priorityPaymentOption": {
+            "type": "string"
+        },
+        "tag": {
+            "type": "string"
+        },
+        "communication": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "sourceWalletId",
+        "externalBankAccountId",
+        "amount",
+        "desiredExecutionDate",
+        "feeCurrency",
+        "feePaymentOption",
+        "priorityPaymentOption"
+    ]
+}

@@ -1,10 +1,27 @@
 import os
+import logging
+import pprint
 from dotenv import load_dotenv
 from ibanfirst_client import Configuration as Conf
 from orness.header_generator import IBanFirst
 
+
+
 # Environment variables are from .env
 load_dotenv()
+
+class Log:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(format='%(asctime)s-%(levelname)s:%(message)s', level=logging.DEBUG, filename="orness_api.log")
+    def get_logger(self):
+        return self.logger
+    def display_format_data(self, data:list) -> str:
+        return pprint.pformat(data)
+    
+    def display_format_http_error(self, error) -> str:
+        return pprint.pformat(error)
+
 
 
 class Config(Conf):

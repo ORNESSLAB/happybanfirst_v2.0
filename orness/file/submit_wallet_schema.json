@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "currency": {
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "holder": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "street": {
+              "type": "string"
+            },
+            "postCode": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "province": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "street",
+            "postCode",
+            "city",
+            "province",
+            "country"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "address"
+      ]
+    }
+  },
+  "required": [
+    "currency",
+    "tag",
+    "holder"
+  ]
+}
+

@@ -1,12 +1,13 @@
 import json
+import logging
+import pprint
 import pandas as pd
-import orness.bind as bind
+from orness import mappings
 from ibanfirst_client.rest import ApiException
 from orness.orness_api import IbExternalBankAccountApi, IbWalletApi, IbPaymentsApi
-from orness.config import Log
 
-log = Log()
-logger = log.get_logger()
+
+logger = logging.getLogger(__name__)
 
 def get_wallets():
     """
@@ -16,9 +17,13 @@ def get_wallets():
 
     :return: A JSON object containing a list of all wallets.
     """
-
-    wallets = IbWalletApi()
-    return wallets.wallets_get().json()
+    logger.info("Get wallets list")
+    try:
+        api = IbWalletApi()
+        logger.info(pprint.pprint(api.wallets_get().json()))
+        return api.wallets_get().json()
+    except ApiException as e:
+        logger.error(pprint.pprint(e.reason))
 
 def get_wallet_id(id):
     """
@@ -30,9 +35,13 @@ def get_wallet_id(id):
     :param id: The ID of the wallet to retrieve.
     :return: A JSON object containing the wallet details.
     """
-
-    wallet = IbWalletApi()
-    return wallet.wallets_id_get(id).json()
+    try:
+        api = IbWalletApi()
+        logger.info(pprint.pprint(api.wallets_id_get(id).json()))
+        return api.wallets_id_get(id).json()
+    except ApiException as e:
+        logger.error(pprint.pprint(e.reason))
+    
 
 def list_wallets_from_file(filename: str) -> list:
     """
@@ -89,7 +98,6 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
         for option in options:
             if option["priorityPaymentOption"] == priority.upper():
                 return {
-                    "priorityPaymentOption": option['priorityPaymentOption'],
                     "feePaymentOption": option["feePaymentOption"],
                     "feeCurrency": option["feeCost"]["currency"]
                 }
@@ -97,57 +105,59 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
 
 def payload(excel_data_filename:str):
     #if we want to ask the user to select the priority option
-    priority = input("Enter the priority [48H, 24H,1H]: ").upper() or "48H" 
-    logger.info("The priority selected is:  {}".format(priority))
-    payload_returned= []
+    print("PAYLOAD")
+    payload_returned = []
     try:
         json_data_from_excel = read_excel(excel_data_filename) 
         for data in json_data_from_excel:
-            payment_submit = bind.mapping_payment_submit(data)
-        
+            payment_submit = mappings.mapping_payment_submit(data)
+            print(f"priorité: {payment_submit}")
+
             #Get fee priority Payment Options
             options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
             logger.info("Build the JSON body for payment operation with {} and {}".format(payment_submit['externalBankAccountId'], payment_submit['sourceWalletId']))
-            properties = get_payment_fee_and_priority(priority=priority, options=options)
+            properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
             payment_submit["feeCurrency"] = properties['feeCurrency']
             payment_submit["feePaymentOption"] = properties['feePaymentOption']
-            payment_submit["priorityPaymentOption"] = properties['priorityPaymentOption']
             dump =json.loads(json.dumps(payment_submit, indent=2))
             #Check if the JSON body format is 
-            if (bind.valid(json_data_to_check=dump, json_schema_file_dir="orness/file/submit_payment_schema.json")):
-                logger.info("json format is ok")
+            if (mappings.valid(json_data_to_check=dump, json_schema_file_dir="orness/file/submit_payment_schema.json")):
                 payload_returned.append(dump) 
             else: 
                 logger.error("json format is not ok")
 
-    except TypeError:
-        logger.error("WalletId or ExternalBankAccountId not found")
+    # except TypeError:
+    #     logger.error("WalletId or ExternalBankAccountId not found")
     except Exception as e:
-        logger.error(log.display_format_http_error(str(e)))
+        logger.error(pprint.pprint(e))
 
     return payload_returned       
 
 def walletload(excel_data_filename: str) -> list:
     return [
         walletdump for data in read_excel(excel_data_filename)
-        if bind.valid(
-            json_data_to_check=(walletdump := bind.mapping_wallets_submit(data)),
+        if mappings.valid(
+            json_data_to_check=(walletdump := mappings.mapping_wallets_submit(data)),
             json_schema_file_dir="orness/file/submit_wallet_schema.json"
         )
     ]
 
-def post_payment(excel_data_filename: str) -> list:   
+def post_payment(excel_data_filename: str) -> list:
 
     payment_submit = payload(excel_data_filename)
     post_payment_response = []
     try:
         for payment in payment_submit:
-            logger.info("Start payment of {}".format(log.display_format_data(payment)))
+                #logger.info("Start payment of {}".format(pprint.pprint(payment)))
+
             api = IbPaymentsApi()
             post_payment_response.append(api.payments_post(payment=payment))
+                
         return post_payment_response
-    except Exception as e:
-        logger.error(log.display_format_http_error(str(e)))
+    except ApiException as e:
+        pprint.pprint(e.reason)
+    # except Exception as e:
+    #     logger.error(pprint.pprint(e))
 
 def create_wallets(excel_data_filename: str) -> list:
     
@@ -158,7 +168,7 @@ def create_wallets(excel_data_filename: str) -> list:
             api = IbWalletApi()
             api.wallets_post(wallet=wallet)
     except Exception as e:
-        logger.error(log.display_format_http_error(str(e)))
+        logger.error(pprint.pprint(e))
 
 def retreive_option_list(wallet_id:str, external_id:str) -> list: 
     """
@@ -204,15 +214,40 @@ def check_if_external_bank_account_exist(external_bank_account_id) -> bool:
             return False
         else:
             raise
+    
+def get_payments_status(status="all"):
+    logging.info("Get payments by status")
+    try:
+        api = IbPaymentsApi()
+        
+        payments = api.payments_status_get(status=status).json()
+        logger.info(pprint.pprint(payments))
+        return payments
+    except ApiException as e:
+        logger.error(pprint.pprint(e.reason))
+
+def get_payment_by_id(id):
+    logging.info("Get payment by id")
+    try:
+        api = IbPaymentsApi()
+        result = api.payments_id_get(id=id).json()
+        logger.info(pprint.pprint(result))
+        return result
+    except ApiException as e:
+        logger.error(pprint.pprint(e.reason))
+        
+def get_external_bank_account_id(id):
+    logging.info("Get external bank account by id")
+    try:
+        api = IbExternalBankAccountApi()
+        result = api.external_bank_accounts_id_get(id=id).json()
+        logger.info(pprint.pprint(result))
+        return result
+    except ApiException as e:
+        logger.error(pprint.pprint(e.reason))
+
 
 
 if __name__ == '__main__':
-    
-    #print(read_excel("new_payment.xlsx"))
-    #print((payload("new_payment.xlsx")[0]))
-    #post_payment(payload("new_payment.xlsx"))
-    print(post_payment("new_payment.xlsx"))
-    #t = retreive_option_list("NjczODM", "NjczODA")
-    #print(get_payment_fee_and_priority(t, "48h".upper()))
-    #print(create_wallets("new_wallet.xlsx"))
-    #print(walletload(excel_data_filename="new_wallet.xlsx"))
+    #print(payload('new_payment.xlsx'))
+    print(mappings.mapping_payment_submit({'Compte': 'NjczODE', 'Destinataire': 'NjczODA', 'devise': 'USD', 'montant': 14, 'tag': 'jjj', 'commentaire': 'opoo', 'date': '2025-04-06', 'priorite': '1H'}))

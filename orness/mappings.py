@@ -139,8 +139,8 @@ def mapping_payment_submit(excel_data:dict) -> dict:
     payment_submit['sourceWalletId'] = excel_data['Compte']
     payment_submit['amount'] = {'value':excel_data['montant'], 'currency':excel_data['devise']}
     payment_submit['desiredExecutionDate'] = pd.to_datetime(excel_data['date'], format='%Y-%m-%d').strftime('%Y-%m-%d') #excel_data['date']
+    payment_submit['priorityPaymentOption'] = excel_data['priorite']
     payment_submit['feeCurrency'] = excel_data['devise']
-       
     payment_submit['tag'] = excel_data['tag'] if excel_data['tag'] else ''
     payment_submit['communication'] = excel_data['commentaire'] if excel_data['commentaire'] else ''
     return payment_submit
@@ -160,3 +160,5 @@ def mapping_wallets_submit(excel_data:dict) -> dict:
     wallet_submit["holder"]["address"]["country"] = coco.convert(excel_data['pays'], to='ISO2') if excel_data['pays'] else ''
     return wallet_submit
     
+if __name__ == '__main__':
+    print(mapping_payment_submit({'Compte': 'NjczODE', 'Destinataire': 'NjczODA', 'devise': 'USD', 'montant': 24, 'tag': 'ha', 'commentaire': 'euh', 'date': '2025-04-06', 'priorite': '24H'}))

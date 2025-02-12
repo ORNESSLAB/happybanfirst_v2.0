@@ -1,28 +1,21 @@
 import os
 import logging
 import pprint
+import configparser 
 from dotenv import load_dotenv
 from ibanfirst_client import Configuration as Conf
 from orness.header_generator import IBanFirst
 
-
+load_dotenv()
+def get_config():
+    config = configparser.ConfigParser()
+    config.read(os.getenv('CONFIG_FILE'))
+    
+    return config
 
 # Environment variables are from .env
-load_dotenv()
 
-class Log:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(format='%(asctime)s-%(levelname)s:%(message)s', level=logging.DEBUG, filename="orness_api.log")
-    def get_logger(self):
-        return self.logger
-    def display_format_data(self, data:list) -> str:
-        return pprint.pformat(data)
-    
-    def display_format_http_error(self, error) -> str:
-        return pprint.pformat(error)
-
-
+logger = logging.getLogger(__name__)
 
 class Config(Conf):
     """
@@ -33,9 +26,11 @@ class Config(Conf):
         Constructor for the class. It sets the variables from the environment variables.
         
         """
+        #self.config = get_config()
         super().__init__()
+        #self.host = self.config['DEFAULT']['host']
         self.host = os.getenv('IB_HOST')
-        print(f"Connected on: {self.host}") 
+        logger.info("Connected on: {} as {}".format(self.host, os.getenv('IB_USERNAME')))
               
     def get_header(self):
         """
@@ -47,7 +42,7 @@ class Config(Conf):
 
         :return: A dictionary containing the WSSE header.
         """
-        header = IBanFirst(user_id=os.getenv('IB_USERNAME'), password=os.getenv('IB_PASSWORD')).generate_header()
+        header = IBanFirst(user_id=os.getenv('IB_USERNAME') , password=os.getenv('IB_PASSWORD')).generate_header()
         header['User-Agent'] = "Orness/1.0.0/python"
         return header
         #return IBanFirst(user_id=self.username, password=self.password).generate_header()
@@ -56,9 +51,8 @@ class Config(Conf):
 
 if __name__ == '__main__':
     cf = Config()
-    df = Config()
-    print("success" if id(cf.get_header()) == id(df.get_header()) else "non")
+    pprint.pprint(cf.get_header())
 
-    print(cf.get_header())
+    
 
           

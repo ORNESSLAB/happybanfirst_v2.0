@@ -117,6 +117,7 @@ class IbPaymentsApi(PaymentsApi):
         return super().payments_id_get(id, **kwargs)
 
     def payments_status_get(self, status, **kwargs):  # noqa: E501
+
         """Get payment list by status  # noqa: E501
 
         Request the list of payments that has been created on a specific period of time.   # noqa: E501
@@ -139,6 +140,7 @@ class IbPaymentsApi(PaymentsApi):
         kwargs['_preload_content'] = False
         return super().payments_status_get(status, **kwargs)
          
+    
     def payments_post(self, payment, **kwargs):  # noqa: E501
 
         """Submit a payment  # noqa: E501
@@ -349,7 +351,10 @@ class IbFinancialMovementsApi(FinancialMovementsApi):
     def financial_movements_id_get(self, id, **kwargs):
         kwargs['_preload_content'] = False  
         return super().financial_movements_id_get(id, **kwargs)
-   
+
+#TODO: get payments from date query
+
+ 
 if __name__ == "__main__":
     import pprint 
     

@@ -47,6 +47,22 @@ def modify_env(key, value):
     for k, v in variables.items():
         set_key('.env', k, v)
     
+def input_credentials():
+    try:
+        username = input("Enter your username: ")
+        password = input("Enter your password: ")
+        modify_env('IB_USERNAME', username)
+        modify_env('IB_PASSWORD', password)
+    except Exception as e:
+        raise
+
+def input_host():
+    try:
+        host = input("Enter your host: ")
+        modify_env('IB_HOST', host)
+    except Exception as e:
+        raise
+    
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +78,11 @@ def main():
     parse.add_argument('-f','--file', help='Excel,csv or json file ', type=str)
     parse.add_argument('--env', help='select environment', choices=['DEV', 'PROD'], default='DEV', metavar='ENV', type=str)
     parse.add_argument('-o', '--opt', help='option to filter the list of the wallet or payment', type=str)
+    parse.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    parse.add_argument('--set-host', help='Change host', type=str)
     
-    config = configparser.ConfigParser()
-    config_file = os.getenv('CONFIG_FILE')
+    
     log_file = os.getenv('LOG_FILE')
-    config.read(config_file)
-    
     args = parse.parse_args()
     
     #LOG
@@ -80,28 +95,22 @@ def main():
     logger.addHandler(logging.StreamHandler())
 
     logger.info("Orness api started")
-    if args.env:
-        if args.env == 'DEV':
-            config['DEFAULT']['username'] = config['DEVELOPMENT']['username']
-            config['DEFAULT']['password'] = config['DEVELOPMENT']['password']
-        else:
-            config['DEFAULT']['username'] = config['PRODUCTION']['username']
-            config['DEFAULT']['password'] = config['PRODUCTION']['password']
-        with open(config_file, 'w') as f:   
-            config.write(f)
-
+    
     if args.log_file:
-        log_file = args.log_file
+        log_file = input("Enter  the name of the file in which you will save your logs: ")
         logger.info("Change log file to {}".format(log_file))
         modify_env('LOG_FILE', log_file)
     if args.set_credentials:
         try:
-            username = input("Enter your username: ")
-            password = input("Enter your password: ") 
-            config['DEFAULT']['username'] = username
-            config['DEFAULT']['password'] = password
-            with open(config_file, 'w') as f:
-                config.write(f) 
+            input_credentials()
+            logger.info("Credentials set for {}".format(username))
+        except Exception as e:
+            logger.error(pprint.pprint(e))
+
+    if args.set_host:
+        try:
+            input_host()
+            logger.info("Host set to {host}")
         except Exception as e:
             logger.error(pprint.pprint(e))
 

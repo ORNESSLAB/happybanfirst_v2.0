@@ -16,10 +16,11 @@ echo "change swagger-client to ibanfirst_client in entire project"
 mv swagger_client ibanfirst_client
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
+sed -i 's/swagger_client/ibanfirst_client/g' test/*.py
 sed -i 's/swagger-client/Orness_client/g' setup.py
-echo -e 'python-dotenv => 1.0.1 \njsonschema >= 4.23.0 \npandas \nopenpyxl == 3.1.5 \ncountry-converter == 0.7.2\npprint' >> requirements.txt
+echo -e 'python-dotenv\njsonschema\npandas == 2.2.3\nopenpyxl\ncountry-converter\nconfigparser\npyyaml' >> requirements.txt
 touch .env 
-echo -e "IB_USERNAME=\nIB_PASSWORD=\nIB_HOST=" >> .env
+echo -e "IB_USERNAME= \nIB_PASSWORD= \nIB_HOST= \nLOG_FILE= \nSETTINGS_FILE=" > .env
 echo "install required modules"
 pip install -r requirements.txt
 echo "set up the client api"

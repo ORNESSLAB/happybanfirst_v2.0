@@ -5,6 +5,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import country_converter as coco
 import pandas as pd
+from datetime import datetime   
 from orness import utils
 
 
@@ -141,13 +142,13 @@ def mapping_payment_submit(excel_data:dict) -> dict:
     
 
     source_Id = "".join(k['id'] for k in utils.get_wallelt_holder_info() if k['holderBankBic'] == excel_data['Emetteur'])[:7]
-    external_Id = "".join(k['id'] for k in utils.get_external_bank_account_info() if k['holderBankBic']== excel_data['Destinataire'])
+    external_Id = "".join(k['id'] for k in utils.get_external_bank_account_info() if k['holderBankBic'] == excel_data['Bénéficiaire'])
 
     payment_submit = {}
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
     payment_submit['amount'] = {'value':excel_data['montant'], 'currency':'EUR'}
-    payment_submit['desiredExecutionDate'] = "2025-02-14" #pd.to_datetime(excel_data['date désirée'], format='%Y-%m-%d').strftime('%Y-%m-%d') #excel_data['date']
+    payment_submit['desiredExecutionDate'] = excel_data['date désirée'] if excel_data['date désirée'] else datetime.today().strftime('%Y-%m-%d') #excel_data['date']
     payment_submit['priorityPaymentOption'] = '48H'#excel_data['priorite']
     payment_submit['feeCurrency'] = 'EUR' 
     payment_submit['tag'] = excel_data['tag'] if excel_data['tag'] else ''

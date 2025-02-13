@@ -56,7 +56,7 @@ def list_wallets_from_file(filename: str) -> list:
         list: the content of the file in json format
     """
     if 'xls' in filename:
-        wallets_data = read_excel(filename=filename)
+        wallets_data = read_data_from_file(filename=filename)
         list_of_wallets = []
         for wallet in wallets_data:
             list_of_wallets.append(get_wallet_id(id=wallet['WalletID'])) #wallet['WalletID']))
@@ -77,7 +77,9 @@ def read_data_from_file(filename):
         dict: the content of the excel file in json format
     """
     exc = pd.read_excel(filename)
+    exc['date désirée'] = pd.to_datetime(exc['date désirée'], unit='d').dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
+    
     return myjson
 
 def get_payment_fee_and_priority(options: list, priority: str) -> dict:
@@ -300,6 +302,6 @@ def get_external_bank_account_info():
         
 
 if __name__ == '__main__':
-    print(walletload('new_wallet.xlsx'))
+    print(payload('new_payment.xlsx'))
     #FXBBBEBBXXX
     

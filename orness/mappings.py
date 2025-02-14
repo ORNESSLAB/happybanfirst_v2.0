@@ -1,13 +1,15 @@
 #Normalize format
 
 import json
+from re import U
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import country_converter as coco
-import pandas as pd
 from datetime import datetime   
 from orness import utils
+import redis
 
+rd = redis.Redis(host='localhost', port=6379, db=0)
 
 def valid(json_data_to_check: dict, json_schema_file_dir: str) -> bool:
     try:
@@ -137,13 +139,12 @@ def mapping_payment_submit(excel_data:dict) -> dict:
         A dictionary containing the payment information.
     """  
     #TODO: manage date conversion
-    #TODO: Create a global variable of source and external bank account id
-    #Get Wallet_Id from BIC
+    
+    
     
 
-    source_Id = "".join(k['id'] for k in utils.get_wallelt_holder_info() if k['holderIBAN'] == excel_data['Compte Emetteur'])
-    external_Id = "".join(k['id'] for k in utils.get_external_bank_account_info() if k['holderIBAN'] == excel_data['Bénéficiaire'])
-
+    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == excel_data['Compte Emetteur'])
+    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == excel_data['Bénéficiaire'])
     payment_submit = {}
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
@@ -170,6 +171,6 @@ def mapping_wallets_submit(excel_data:dict) -> dict:
     wallet_submit["holder"]["address"]["country"] = coco.convert(excel_data['pays'], to='ISO2') if excel_data['pays'] else ''
     return wallet_submit
     
-# if __name__ == '__main__':
-#   print(mapping_payment_submit())
+if __name__ == '__main__':
+   print(rd.get('wallets_info'))
     

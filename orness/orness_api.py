@@ -355,12 +355,4 @@ class IbFinancialMovementsApi(FinancialMovementsApi):
 #TODO: get payments from date query
 
  
-if __name__ == "__main__":
-    import pprint 
-    
-    to = IbLogsApi()
-    print(to.api_client.default_headers)
-    tt = pprint.pformat(to.logs_get().json())
-    print(tt)
-    
 

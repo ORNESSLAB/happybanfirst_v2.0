@@ -6,8 +6,7 @@ import redis
 class RedisCache:
     def __init__(self, host='localhost', port=6379, db=0):
         self.r = redis.Redis(host=host, port=port, db=db)
-        self.set('external_bank_accounts_info', json.dumps(utils.get_external_bank_account_info()))
-        self.set('wallets_info', json.dumps(utils.get_wallet_holder_info()))
+        
 
     def get(self, key):
         value = self.r.get(key)

@@ -14,68 +14,81 @@ from __future__ import absolute_import
 
 import unittest
 
-import swagger_client
-from swagger_client.api.payments_api import PaymentsApi  # noqa: E501
-from swagger_client.rest import ApiException
+from orness import utils
 
 
 class TestPaymentsApi(unittest.TestCase):
     """PaymentsApi unit test stubs"""
 
     def setUp(self):
-        self.api = PaymentsApi()  # noqa: E501
+        self.file = 'new_payment.xlsx'
+        self.all_wallet_info = utils.get_wallelt_holder_info()
+        self.all_external_bank_bound_user_account = utils.get_external_bank_account_info()
 
     def tearDown(self):
         pass
+    def test_check_if_wallet_exist_using_account_number_false(self):
+        self.assertFalse([i['id'] for i in self.all_wallet_info if i['holderIBAN'] == "FR1130002005440000007765L61" ])
+    
+    def test_check_if_wallet_exist_using_account_number_true(self):
+        self.assertTrue([i['id'] for i in self.all_wallet_info if i['holderIBAN'] == "BE39914001921319" ])
+    
+    def test_check_if_external_exist_using_account_number_true(self):
+        self.assertTrue([i['id'] for i in self.all_external_bank_bound_user_account if i['holderIBAN'] == "FR1130002005440000007765L61" ])
+    
+    def test_check_if_external_exist_using_account_number_false(self):
+        self.assertFalse([i['id'] for i in self.all_external_bank_bound_user_account if i['holderIBAN'] == "BE39914001921319" ])
+    
+    # def test_payments_id_confirm_put(self):
+    #     """Test case for payments_id_confirm_put
 
-    def test_payments_id_confirm_put(self):
-        """Test case for payments_id_confirm_put
+    #     Confirm a payment  # noqa: E501
+    #     """
+    #     pass
 
-        Confirm a payment  # noqa: E501
-        """
-        pass
+    # def test_payments_id_delete(self):
+    #     """Test case for payments_id_delete
 
-    def test_payments_id_delete(self):
-        """Test case for payments_id_delete
+    #     Delete a payemt  # noqa: E501
+    #     """
+    #     pass
 
-        Delete a payemt  # noqa: E501
-        """
-        pass
+    # def test_payments_id_get(self):
+    #     """Test case for payments_id_get
 
-    def test_payments_id_get(self):
-        """Test case for payments_id_get
+    #     Get payment details  # noqa: E501
+    #     """
+    #     pass
 
-        Get payment details  # noqa: E501
-        """
-        pass
+    # def test_payments_id_proof_of_transaction_put(self):
+    #     """Test case for payments_id_proof_of_transaction_put
 
-    def test_payments_id_proof_of_transaction_put(self):
-        """Test case for payments_id_proof_of_transaction_put
+    #     Upload a proof of transaction for a payment  # noqa: E501
+    #     """
+    #     pass
 
-        Upload a proof of transaction for a payment  # noqa: E501
-        """
-        pass
+    # def test_payments_options_wallet_id_external_bank_account_id_get(self):
+    #     """Test case for payments_options_wallet_id_external_bank_account_id_get
 
-    def test_payments_options_wallet_id_external_bank_account_id_get(self):
-        """Test case for payments_options_wallet_id_external_bank_account_id_get
+    #     Get payment options for a wallet and an external bank account  # noqa: E501
+    #     """
+    #     pass
 
-        Get payment options for a wallet and an external bank account  # noqa: E501
-        """
-        pass
-
-    def test_payments_post(self):
+    def test_payments_post_true(self):
         """Test case for payments_post
 
         Submit a payment  # noqa: E501
         """
-        pass
+        submit_pay = utils.post_payment(self.file)
+        self.assertNotIsInstance(submit_pay, str)
+        
 
-    def test_payments_status_get(self):
-        """Test case for payments_status_get
+    # def test_payments_status_get(self):
+    #     """Test case for payments_status_get
 
-        Get payment list by status  # noqa: E501
-        """
-        pass
+    #     Get payment list by status  # noqa: E501
+    #     """
+    #     pass
 
 
 if __name__ == '__main__':

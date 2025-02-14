@@ -77,7 +77,7 @@ def read_data_from_file(filename):
         dict: the content of the excel file in json format
     """
     exc = pd.read_excel(filename)
-    exc['date désirée'] = pd.to_datetime(exc['date désirée'], unit='d').dt.strftime('%Y-%m-%d')
+    exc['Date désirée'] = pd.to_datetime(exc['Date désirée'], unit='d').dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
     
     return myjson
@@ -117,10 +117,10 @@ def payload(excel_data_filename:str):
             payment_submit = mappings.mapping_payment_submit(data)
 
             if not payment_submit['externalBankAccountId']:
-                logger.error('Recipient BIC have not been entered')
+                logger.error('Recipient IBAN has not been entered')
                 continue
             if not payment_submit['sourceWalletId']:
-                logger.error('Source BIC have not been given')
+                logger.error('Issuing Account IBAN has not been given')
                 continue
 
             # Get fee priority Payment Options
@@ -266,7 +266,7 @@ def get_wallelt_holder_info():
     try:
         list_of_wallet_by_id = [i['id'] for i in get_wallets()['wallets'] ]
         list_info = [{'id': i, 'holderName': get_wallet_id(id=i)['wallet']['holder']['name'], 
-                    'correspondentBankBic': get_wallet_id(id=i)['wallet']['correspondentBank']['bic'], 
+                    'holderIBAN': get_wallet_id(id=i)['wallet']['accountNumber'], 
                     'holderBankBic': get_wallet_id(id=i)['wallet']['holderBank']['bic']} for i in list_of_wallet_by_id]
         
         return list_info  
@@ -295,13 +295,15 @@ def get_external_bank_account_info():
     logger.debug("Get external bank BICs")
     try:
         accounts = get_external_bank_accounts()
-        list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderType': acc['holder']['type']} for acc in accounts['accounts']]
+        list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber']} for acc in accounts['accounts']]
         return list_info
     except ApiException as e:
         logger.error(pprint.pprint(e.reason))
         
 
 if __name__ == '__main__':
-    print(payload('new_payment.xlsx'))
+    file_a = 'new_payment.xlsx'
+    print(payload(file_a))
+    #print(get_external_bank_account_info())
     #FXBBBEBBXXX
     

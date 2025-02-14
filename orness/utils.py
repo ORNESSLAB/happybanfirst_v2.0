@@ -11,6 +11,7 @@ from orness.orness_api import IbPaymentsApi
 import re
 
 
+
 logger = logging.getLogger(__name__)
 
 def get_wallets():
@@ -261,15 +262,19 @@ def get_external_bank_account_id(id):
         logger.error(pprint.pprint(e.reason))
 
 
-def get_wallelt_holder_info():
-    logging.debug("Get holder and correspondent bank bics ")
+def get_wallet_holder_info():
+    logging.debug("Get holder info ")
     try:
-        list_of_wallet_by_id = [i['id'] for i in get_wallets()['wallets'] ]
-        list_info = [{'id': i, 'holderName': get_wallet_id(id=i)['wallet']['holder']['name'], 
-                    'holderIBAN': get_wallet_id(id=i)['wallet']['accountNumber'], 
-                    'holderBankBic': get_wallet_id(id=i)['wallet']['holderBank']['bic']} for i in list_of_wallet_by_id]
+        list_of_wallet_by_id = [{"id": i['id'], "amountValue": i["bookingAmount"]["value"], 'amountCurrency': i["bookingAmount"]["currency"]} for i in get_wallets()['wallets'] ]
+        list_of_wallet_info = [{'id': i['id'], 
+                    'holderName': get_wallet_id(id=i['id'])['wallet']['holder']['name'], 
+                    'holderIBAN': get_wallet_id(id=i['id'])['wallet']['accountNumber'], 
+                    'holderBankBic': get_wallet_id(id=i['id'])['wallet']['holderBank']['bic'], 
+                    "amountValue": i["amountValue"], 'amountCurrency': i["amountCurrency"] } for i in list_of_wallet_by_id]
+       
+
         
-        return list_info  
+        return list_of_wallet_info  
     except ApiException as e:
         logger.error(pprint.pprint(e.reason))
 
@@ -300,10 +305,10 @@ def get_external_bank_account_info():
     except ApiException as e:
         logger.error(pprint.pprint(e.reason))
         
-
+#def verify_that_
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
-    print(payload(file_a))
+    #print(get_wallets())
     #print(get_external_bank_account_info())
     #FXBBBEBBXXX
-    
+    print(get_wallet_holder_info())

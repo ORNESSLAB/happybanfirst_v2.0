@@ -152,7 +152,7 @@ def mapping_payment_submit(data:dict) -> dict:
     payment_submit['desiredExecutionDate'] = data['Date désirée'] if data['Date désirée'] else datetime.today().strftime('%Y-%m-%d') #data['date']
     payment_submit['priorityPaymentOption'] = data['Priorité'] if data['Priorité'] else '24H' #data['priorite']
     payment_submit['feeCurrency'] = 'EUR' 
-    payment_submit['tag'] = data['Libélé'] if data['Libélé'] else ''
+    payment_submit['tag'] = data['Libelé'] if data['Libellé'] else ''
     payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
     return payment_submit
 

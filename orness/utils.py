@@ -268,10 +268,10 @@ def get_payments_status(status="all"):
         api = IbPaymentsApi()
         
         payments = api.payments_status_get(status=status).json()
-        logger.info(pprint.pprint(payments))
+        
         return payments
     except ApiException as e:
-        logger.error(pprint.pprint(e.reason))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
 def get_payment_by_id(id):
     logging.info("Get payment by id")
@@ -377,11 +377,9 @@ def authentication(user_id, password):
 
 
 
-
-
-
 rd.set('external_bank_accounts_info', json.dumps(get_external_bank_account_info()))
 rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
+rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
 
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
@@ -391,7 +389,8 @@ if __name__ == '__main__':
     #print(list_wallets_from_file(file_a))
     #retreive_option_list(wallet_id="", external_id="Njc1NzI")
     #print(check_if_external_bank_account_exist(external_bank_account_id="Njc1NzI"))
-    payload(file_a)
+    #payload(file_a)
     #jason = {'Compte Emetteur': 'BE39914001921319', 'Bénéficiaire': 'FR1130002005440000007765L61', 'Montant': 14, 'Libélé': 'jjj', 'Commentaire': 'opoo', 'Date désirée': '2025-02-17'}
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
     #print(post_payment_from_form(jason))
+    print(rd.get('payments_histo'))

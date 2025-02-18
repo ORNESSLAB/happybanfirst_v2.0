@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Effectuer Votre transfert</title>
+    <title>Orness-IbanFirst</title>
     <link rel="stylesheet" href="static/style.css">
     <div class="head-div">
         <h2>Transfert</h2>
@@ -22,17 +22,7 @@
             {% for recip in extern %}
             <option value="{{ recip['holderName'] }}">{{ recip['holderName'] }}</option>
             {% endfor %}
-        <!-- <input type="text" list="recipient_list" name="recipient_list" placeholder="Choisissez un bénéficiaire" required> -->
-        <!-- <datalist id="recipient" name="recipient">
-          
-         
-        {% for recip in extern %}
         
-            <option value="i">{{ recip["holderName"] }}</option>
-        
-        {% endfor %}
-
-        </datalist><br><br> -->
         </select>
         {% endif %}
         <!-- <input type="text" id="recipient" name="recipient"><br><br> -->
@@ -82,7 +72,44 @@
 
         </div>
     </div>
+    <div class="container-two">
+        <caption> Historique des transferts </caption> 
+        <div class="table">
+            
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Expéditeur</th>
+                <th>Bénéficiaire</th>
+                <th>Montant</th>
+                <th>Taux</th>
+                <th>Date de Création</th>
+                <th>Communication</th>
+                <th>Contre valeur</th>
+                <th>Statut</th>
+            </tr>
+            <tbody>
+            {% if history %}
+            {% for hist in history %}
+            <tr>
+                <td>{{ hist['id'] }}</td>
+                <td>{{ hist['sourceWalletId'] }}</td>
+                <td>{{ hist['externalBankAccountId'] }}</td>
+                <td>{{ hist['amount']['value'] }}  {{ hist['amount']['currency'] }}</td>
+                <td>{{ hist['rate']['appliedBid'] }}  {{ hist['rate']['currencyPair'] }}</td>
+                <td>{{ hist['createdDate'] }}</td>
+                <td>{{ hist['communication'] }}</td>
+                <td>{{ hist['counterValue']['value'] }}  {{ hist['counterValue']['currency'] }}</td>
+                <td>{{ hist['status'] }}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+            </thead>
+        </table>
+        </div>
     
+    </div>
     
     
 </body>

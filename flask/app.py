@@ -8,6 +8,7 @@ import logging
 import redis
 rd = redis.Redis(host='localhost', port=6379, db=0)
 extern = json.loads(rd.get('external_bank_accounts_info'))
+pay_history = json.loads(rd.get('payments_histo'))
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def submit_payment():
 
         data['Compte Emetteur'] = request.form.get("source_account")
         data['Commentaire'] = request.form.get("comment")
-        data['Libélé']= request.form.get("tag")
+        data['Libellé']= request.form.get("tag")
         data['Montant']= request.form.get("amount")
         data['Bénéficiaire']= request.form.get("recipient")
         data['Date désirée']= request.form.get("date")
@@ -85,7 +86,7 @@ def submit_payment():
         
 
    
-    return render_template('submit_payment.html', extern=extern)
+    return render_template('submit_payment.html', extern=extern, history=pay_history)
 
 
 

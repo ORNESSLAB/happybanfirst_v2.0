@@ -17,6 +17,31 @@ justify-content: center;
 flex-shrink: 1;
 
 }
+.container-home{
+    margin: 0 auto;
+    width: 80%;
+    padding: 10px;
+    
+    border-right: 1px solid rgb(228, 220, 220);
+    border-left: 1px solid rgb(228, 220, 220);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 1;
+    
+    }
+input[type="password"] {
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+
 .container-child { 
     display: flex;
     gap: 3px;
@@ -43,4 +68,87 @@ margin: 0px, 20px;
 }
 .head-div{
     background-color: palevioletred;
+}
+input[type="text"] {    
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+input[type="list"] {    
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+input[type="submit"] {
+    width: 90%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 2px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+input[type="submit"]:hover {
+    background-color: #45a049;
+}
+input[type="number"] {    
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+textarea {
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+select {
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+input[tpye="date"] {
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+}
+input[type="time"] {
+    width: 90%;
+    padding: 2px 2px;
+    
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
 }

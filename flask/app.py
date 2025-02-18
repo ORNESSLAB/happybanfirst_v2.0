@@ -1,4 +1,4 @@
-from math import e
+import json
 import re
 from flask  import Flask, render_template, request, flash, redirect, url_for
 import os
@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import logging
 import redis
 rd = redis.Redis(host='localhost', port=6379, db=0)
-
+extern = json.loads(rd.get('external_bank_accounts_info'))
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def get_wallet():
 
 @app.route("/submit_payment", methods=["GET", "POST"])
 def submit_payment():
-    extern = rd.get('external_bank_accounts_info')
+    
     
     data = {}
     if request.method == "POST":
@@ -85,11 +85,17 @@ def submit_payment():
         
 
    
-    return render_template('submit_payment.html')
+    return render_template('submit_payment.html', extern=extern)
 
 
 
 if __name__ == "__main__":
     #print(f'{os.getenv("IB_PASSWORD")}')
+    # t = ""
+    # for i in extern:
+    #     t = i["holderName"]
+    #     break
+    # print(t)
 
+    #print(f'{i["holderName"]}' for i in extern)
     app.run(debug=True, port=8980)

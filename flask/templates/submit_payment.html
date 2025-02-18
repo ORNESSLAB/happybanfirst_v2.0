@@ -13,18 +13,29 @@
         
     <form method="POST">
         
-        <label for="source_account">Compte Emetteur :</label>
-        <input type="text" id="source_account" name="source_account" required><br><br>
+        <label for="source_account">Expéditeur:</label>
+        <input type="text" id="source_account" name="source_account" placeholder="Entrez votre IBAN"><br><br>
         
         <label for="recipient">Benéficiaire :</label>
-        <!-- <datalist id="recipient" name="recipient"></select>
+        {%if extern %}
+        <select id="recipient" name="recipient">
+            {% for recip in extern %}
+            <option value="{{ recip['holderName'] }}">{{ recip['holderName'] }}</option>
+            {% endfor %}
+        <!-- <input type="text" list="recipient_list" name="recipient_list" placeholder="Choisissez un bénéficiaire" required> -->
+        <!-- <datalist id="recipient" name="recipient">
+          
+         
         {% for recip in extern %}
         
-            <option value={{ recip["holderName"] }}>{{ recip["holderName"] }}</option>
+            <option value="i">{{ recip["holderName"] }}</option>
         
         {% endfor %}
+
         </datalist><br><br> -->
-        <input type="text" id="recipient" name="recipient"><br><br>
+        </select>
+        {% endif %}
+        <!-- <input type="text" id="recipient" name="recipient"><br><br> -->
         
         <label for="amount">Montant :</label>
         <input type="number" id="amount" name="amount" ><br><br>
@@ -44,7 +55,7 @@
         <label for="comment">Commentaire :</label><br>
         <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br><br>
         
-        <div style="text-align:center;">      
+        <div>
         <input type="submit" value="Envoyer">
         </div>
         

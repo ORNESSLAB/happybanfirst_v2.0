@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Effectuer Votre transfert</title>
+    <link rel="stylesheet" href="static/style.css">
+    <div class="head-div">
+        <h2>Transfert</h2>
+        </div>
+</head>
+<body>
+    
+    <div class="container">
+        
+    <form method="POST">
+        
+        <label for="source_account">Compte Emetteur :</label>
+        <input type="text" id="source_account" name="source_account" required><br><br>
+        
+        <label for="recipient">Benéficiaire :</label>
+        <!-- <datalist id="recipient" name="recipient"></select>
+        {% for recip in extern %}
+        
+            <option value={{ recip["holderName"] }}>{{ recip["holderName"] }}</option>
+        
+        {% endfor %}
+        </datalist><br><br> -->
+        <input type="text" id="recipient" name="recipient"><br><br>
+        
+        <label for="amount">Montant :</label>
+        <input type="number" id="amount" name="amount" ><br><br>
+       
+        <label for="tag"> Libélé      :</label>
+        <input type="text" id="tag" name="tag"><br><br>
+        
+        <label for="date">Date désirée :</label>
+        <input type="date" id="date" name="date" ><br><br>
+        <label for="urgency">Urgence :</label>
+        <select id="urgency" name="urgency">
+            <option value="Urgent">Urgent</option>
+            <option value="Normal">Normal</option>
+            <option value="Différé">Différé</option>
+        </select><br><br>
+          
+        <label for="comment">Commentaire :</label><br>
+        <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br><br>
+        
+        <div style="text-align:center;">      
+        <input type="submit" value="Envoyer">
+        </div>
+        
+    </form>
+    
+    
+    <form method="POST">
+        <input type="file" name="file" id="pay_file"><input type="submit" value="Envoyer">   
+    </form>
+    
+    <div class="left-column">
+        <p>
+        
+            {% if data and result %}
+            Bénéficiaire :{{ data['Bénéficiaire'] }}<br><br>Montant : {{ data['Montant'] }} <br><br>
+            Expéditeur: {{ data['Compte Emetteur'] }}<br><br> Date: {{ result['desiredExecutionDate']}}<br><br>
+            Urgence: {{ result['priorityPaymentOption'] }}<br><br> Commentaire: {{ result['communication'] }}<br><br>
+            {% endif %}
+            
+            {% if data and result %}
+            {% endif %}
+            
+            </p>
+
+        </div>
+    </div>
+    
+    
+    
+</body>
+</html>

@@ -1,7 +1,7 @@
 #Normalize format
 
 import json
-from re import U
+
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import country_converter as coco
@@ -110,7 +110,7 @@ def mapping_payment_values(json_data:str):
     return payment
 
 
-def mapping_payment_submit(excel_data:dict) -> dict:
+def mapping_payment_submit(data:dict) -> dict:
     """
     Mapping function for payment submission.
     
@@ -119,7 +119,7 @@ def mapping_payment_submit(excel_data:dict) -> dict:
     
     Parameters
     ----------
-    excel_data : str
+    data : str
         A JSON string containing a list of dictionaries, where each dictionary represents
         a single row of an excel file. The dictionaries should contain the following keys:
             externalBankAccountId : str
@@ -143,32 +143,32 @@ def mapping_payment_submit(excel_data:dict) -> dict:
     
     
 
-    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == excel_data['Compte Emetteur'])
-    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == excel_data['Bénéficiaire'])
+    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == data['Compte Emetteur'])
+    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Bénéficiaire'])
     payment_submit = {}
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
-    payment_submit['amount'] = {'value':excel_data['Montant'], 'currency':'EUR'}
-    payment_submit['desiredExecutionDate'] = excel_data['Date désirée'] if excel_data['Date désirée'] else datetime.today().strftime('%Y-%m-%d') #excel_data['date']
-    payment_submit['priorityPaymentOption'] = '48H'#excel_data['priorite']
+    payment_submit['amount'] = {'value':data['Montant'], 'currency':'EUR'}
+    payment_submit['desiredExecutionDate'] = data['Date désirée'] if data['Date désirée'] else datetime.today().strftime('%Y-%m-%d') #data['date']
+    payment_submit['priorityPaymentOption'] = data['Priorité'] if data['Priorité'] else '24H' #data['priorite']
     payment_submit['feeCurrency'] = 'EUR' 
-    payment_submit['tag'] = excel_data['Libélé'] if excel_data['Libélé'] else ''
-    payment_submit['communication'] = excel_data['Commentaire'] if excel_data['Commentaire'] else ''
+    payment_submit['tag'] = data['Libélé'] if data['Libélé'] else ''
+    payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
     return payment_submit
 
-def mapping_wallets_submit(excel_data:dict) -> dict:
+def mapping_wallets_submit(data:dict) -> dict:
     wallet_submit = {}
-    wallet_submit["currency"] = excel_data['devise'] if excel_data['devise'] else ''
-    wallet_submit["tag"] = excel_data['tag'] if excel_data['tag'] else ''
+    wallet_submit["currency"] = data['devise'] if data['devise'] else ''
+    wallet_submit["tag"] = data['tag'] if data['tag'] else ''
     wallet_submit["holder"] = {}
-    wallet_submit["holder"]["name"] = excel_data['nom'] if excel_data['nom'] else ''
-    wallet_submit["holder"]["type"] = excel_data['type'].capitalize() if excel_data['type'] else ''
+    wallet_submit["holder"]["name"] = data['nom'] if data['nom'] else ''
+    wallet_submit["holder"]["type"] = data['type'].capitalize() if data['type'] else ''
     wallet_submit["holder"]["address"] = {}
-    wallet_submit["holder"]["address"]["street"] = excel_data['rue'] if excel_data['rue'] else ''
-    wallet_submit["holder"]["address"]["postCode"] = excel_data['code postal'] if excel_data['code postal'] else ''
-    wallet_submit["holder"]["address"]["city"] = excel_data['ville'] if excel_data['ville'] else ''
-    wallet_submit["holder"]["address"]["province"] = excel_data['province'] if excel_data['province'] else ''
-    wallet_submit["holder"]["address"]["country"] = coco.convert(excel_data['pays'], to='ISO2') if excel_data['pays'] else ''
+    wallet_submit["holder"]["address"]["street"] = data['rue'] if data['rue'] else ''
+    wallet_submit["holder"]["address"]["postCode"] = data['code postal'] if data['code postal'] else ''
+    wallet_submit["holder"]["address"]["city"] = data['ville'] if data['ville'] else ''
+    wallet_submit["holder"]["address"]["province"] = data['province'] if data['province'] else ''
+    wallet_submit["holder"]["address"]["country"] = coco.convert(data['pays'], to='ISO2') if data['pays'] else ''
     return wallet_submit
     
 if __name__ == '__main__':

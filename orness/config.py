@@ -1,10 +1,16 @@
+from email import header
 import os
 import logging
 import pprint
 import configparser 
+from ibanfirst_client.rest import ApiException
 from dotenv import load_dotenv
 from ibanfirst_client import Configuration as Conf
 from orness.header_generator import IBanFirst
+from orness import utils
+import redis
+
+rd = redis.Redis(host='localhost', port=6379, db=0)
 
 load_dotenv()
 def get_config():
@@ -42,9 +48,14 @@ class Config(Conf):
 
         :return: A dictionary containing the WSSE header.
         """
-        header = IBanFirst(user_id=os.getenv('IB_USERNAME') , password=os.getenv('IB_PASSWORD')).generate_header()
-        header['User-Agent'] = "Orness/1.0.0/python"
-        return header
+        
+        try:
+            header = IBanFirst(user_id=os.getenv('IB_USERNAME') , password=os.getenv('IB_PASSWORD')).generate_header()
+            #header = IBanFirst(user_id=rd.get('user_id').decode('utf-8') , password=rd.get('password').decode('utf-8')).generate_header()
+            header['User-Agent'] = "Orness/1.0.0/python"
+            return header
+        except ApiException as e:
+            logger.error(pprint.pprint(e.reason))
         #return IBanFirst(user_id=self.username, password=self.password).generate_header()
 
 

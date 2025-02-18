@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Home</title>
+        
+        <link rel="stylesheet" href="static/style.css">
+        <div class="head-div">
+            <h1>Connected as {{ user_id }}</h1>
+        </div>
+    </head>
+    <body>
+        
+        <div class="container">
+        <form method="POST">
+        <div class="form-group">
+        <label for=""choice">Choose an action:</label>
+        <select id="choice" name="choice">
+            <option value="submit_payment">Submit a payment</option>
+            <option value="check_wallets">check your wallets</option>
+            <option value="check_history">Check history</option>
+        </select>
+        </div>
+        <input type="submit" value="Valider">
+        </form>
+        </div>
+    </body>
+</html>

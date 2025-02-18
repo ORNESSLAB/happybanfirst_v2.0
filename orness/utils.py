@@ -1,6 +1,7 @@
 import json
-import datetime
 import logging
+import os
+import sys
 import pprint
 import pandas as pd
 from orness import mappings
@@ -9,7 +10,17 @@ from orness.orness_api import IbExternalBankAccountApi
 from orness.orness_api import IbWalletApi
 from orness.orness_api import IbPaymentsApi
 import re
+from dotenv import load_dotenv, dotenv_values, set_key
 from orness.cache import RedisCache
+
+load_dotenv()
+
+#TODO: verifier que le wallet a bien assez d'argent
+#TODO: verifier les option de frais entre deux contreparties (counterparty)
+#TODO: si l'external bank account n'existe pas, demander d'en ajouter 
+#TODO: pour les resutat des paiement, creer un mappage pour les options
+#TODO: creer une fonction qui confirme le paiement
+#TODO: creer une fonction qui annule le paiement
 
 
 rd = RedisCache()
@@ -29,7 +40,7 @@ def get_wallets():
         api = IbWalletApi()
         return api.wallets_get().json()
     except ApiException as e:
-        logger.error(pprint.pprint(e.reason))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
 
 def get_wallet_id(id):
     """
@@ -81,14 +92,15 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
             list
                 A list of dictionaries containing the payment options that match the given priority
         """
-        result = next((option for option in options if option["priorityPaymentOption"] == priority.upper()), None)
+        result = [option for option in options if option["priorityPaymentOption"] == priority.upper()]
+        print(f"result: {result}")
         if result is None:
             raise ValueError(logger.error(pprint.pprint(f"Priority {priority} not found in options: {options}")))
         else:
             return {
-                "feePaymentOption": result["feePaymentOption"],
-                "feeValue": result["feeCost"]["value"],
-                "feeCurrency": result["feeCost"]['currency']
+                "feePaymentOption": result[0]["feePaymentOption"],
+                "feeValue": result[0]["feeCost"]["value"],
+                "feeCurrency": result[0]["feeCost"]['currency']
             }
 
 def payload(excel_data_filename:str):
@@ -105,7 +117,7 @@ def payload(excel_data_filename:str):
             if not payment_submit['sourceWalletId']:
                 logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
                 continue
-
+            #payload_returned.append(payload_dict(payment_submit))
             # Get fee priority Payment Options
             options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
             logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
@@ -122,12 +134,40 @@ def payload(excel_data_filename:str):
             except (TypeError, json.JSONDecodeError) as e:
                 logger.error(f"Error processing JSON: {e}")
 
+    except TypeError as e:
+        logger.error(f"Error : {e}")
+    except ApiException as e:
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+    logger.debug(f'payload_returned: {pprint.pprint(payload_returned)}')
+
+    return payload_returned
+def payload_dict(data:dict):
+    
+    payment_submit = mappings.mapping_payment_submit(data)
+
+    try:
+        # Get fee priority Payment Options
+        options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
+        logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
+        properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+        payment_submit["feePaymentOption"] = properties['feePaymentOption']
+
+                # Serialize and validate JSON
+        try:
+            dump = json.loads(json.dumps(payment_submit, indent=2))
+            if mappings.valid(json_data_to_check=dump, json_schema_file_dir="orness/file/submit_payment_schema.json"):
+                return dump
+            else:
+                logger.error("JSON format is not valid")
+        except (TypeError, json.JSONDecodeError) as e:
+            logger.error(f"Error processing JSON: {e}")
+
     except TypeError:
         logger.error("WalletId or ExternalBankAccountId not found")
     except ApiException as e:
-        logger.error(pprint.pprint(e))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
-    return payload_returned
+
 
 def walletload(excel_data_filename: str) -> list:
     return [
@@ -151,9 +191,20 @@ def post_payment(excel_data_filename: str) -> list:
                 
         return post_payment_response
     except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body)).group(1)}")
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
     return post_payment_response
+    
+def post_payment_from_form(form_data: dict) -> list:
+    payment_submit = payload_dict(form_data)
+    
+    try:
+        api = IbPaymentsApi()
+        post_payment_response = api.payments_post(payment=payment_submit).json()
+                
+        return post_payment_response
+    except ApiException as e:
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
     
 
 def create_wallets(excel_data_filename: str) -> list:
@@ -165,7 +216,7 @@ def create_wallets(excel_data_filename: str) -> list:
             api = IbWalletApi()
             api.wallets_post(wallet=wallet)
     except ApiException as e:
-        logger.error(pprint.pprint(e))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
 def retreive_option_list(wallet_id:str, external_id:str) -> list: 
     """
@@ -180,8 +231,8 @@ def retreive_option_list(wallet_id:str, external_id:str) -> list:
         if check_if_external_bank_account_exist(external_bank_account_id=external_id) and check_if_wallet_exist(wallet_id=wallet_id):
             return api.payments_options_wallet_id_external_bank_account_id_get(external_bank_account_id=external_id, wallet_id=wallet_id).json()['paymentOption']['options']
     except ApiException as e:
-        logger.error(pprint.pprint(e))
-    return []
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+    
 
 def check_if_wallet_exist(wallet_id: str) -> bool:
         """
@@ -246,7 +297,9 @@ def get_external_bank_account_id(id):
 def get_wallet_holder_info():
     logging.debug("Get holder info ")
     try:
-        list_of_wallet_by_id = [{"id": i['id'], "amountValue": i["bookingAmount"]["value"], 'amountCurrency': i["bookingAmount"]["currency"]} for i in get_wallets()['wallets'] ]
+        list_of_wallet_by_id = [{"id": i['id'], 
+                                 "amountValue": i["bookingAmount"]["value"], 
+                                 'amountCurrency': i["bookingAmount"]["currency"]} for i in get_wallets()['wallets'] ]
         list_of_wallet_info = [{'id': i['id'], 
                     'holderName': get_wallet_id(id=i['id'])['wallet']['holder']['name'], 
                     'holderIBAN': get_wallet_id(id=i['id'])['wallet']['accountNumber'], 
@@ -256,8 +309,10 @@ def get_wallet_holder_info():
 
         
         return list_of_wallet_info  
+    except TypeError:
+        logger.error("User not found")
     except ApiException as e:
-        logger.error(pprint.pprint(e.reason))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
 def get_external_bank_accounts():
     logger.debug("Get external bank accounts")
@@ -266,7 +321,7 @@ def get_external_bank_accounts():
         result = api.external_bank_accounts_get().json()
         return result
     except ApiException as e:
-        logger.error(pprint.pprint(e.reason))
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
 def get_external_bank_account_info():
     logger.debug("Get external bank BICs")
@@ -274,13 +329,51 @@ def get_external_bank_account_info():
         accounts = get_external_bank_accounts()
         list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber']} for acc in accounts['accounts']]
         return list_info
+    except TypeError:
+        logger.error("User not found")
+    except ApiException as e:
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+        
+
+def confirm_paymet(id):
+    api = IbPaymentsApi()
+    logger.debug("Payment confirmed")
+    return api.payments_id_confirm_post(id=id)
+
+def delete_paymet(id):
+    api = IbPaymentsApi()
+    logger.debug("Payment deleted")
+    return api.payments_id_delete(id=id)
+
+def modify_env(key, value):
+    variables = dotenv_values('.env')
+    variables[key] = value
+    for k, v in variables.items():
+        set_key('.env', k, v)
+
+
+# def authentication(user_id, password):
+#     try:
+#         rd.set('user_id', user_id)
+#         rd.set('password', password)
+#         check = get_wallet_holder_info()
+#         return f"{rd.get('user_id').decode('utf-8')} Connected! " if check['id'] else "User not found"
+#     except ApiException as e:
+#         rd.delete('user_id')
+#         rd.delete('password')
+#         logger.error(pprint.pprint(e.reason))
+#         return 'User not found'
+def authentication(user_id, password):
+    try:
+        modify_env('IB_USERNAME', user_id)
+        modify_env('IB_PASSWORD', password)
+        check = get_wallet_holder_info()
+        return f"{os.getenv('IB_USERNAME')} Connected! " if check[0]['id'] else "User not found"
+    except TypeError:
+        logger.error("User not found")
     except ApiException as e:
         logger.error(pprint.pprint(e.reason))
-        
-#def verify_that_
-
-
-
+        sys.exit(1)
 
 
 
@@ -293,9 +386,12 @@ rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
     #print(get_wallets())
-    print(post_payment(file_a))
-    #FXBBBEBBXXX
+    #print(post_payment(file_a))
     #print(get_wallet_holder_info())
     #print(list_wallets_from_file(file_a))
+    #retreive_option_list(wallet_id="", external_id="Njc1NzI")
     #print(check_if_external_bank_account_exist(external_bank_account_id="Njc1NzI"))
-    #{'Compte Emetteur': 'BE39914001921319', 'Bénéficiaire': 'FR1130002005440000007765L61', 'Montant': 14, 'Libélé': 'jjj', 'Commentaire': 'opoo', 'Date désirée': '2025-02-17'}
+    payload(file_a)
+    #jason = {'Compte Emetteur': 'BE39914001921319', 'Bénéficiaire': 'FR1130002005440000007765L61', 'Montant': 14, 'Libélé': 'jjj', 'Commentaire': 'opoo', 'Date désirée': '2025-02-17'}
+    #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
+    #print(post_payment_from_form(jason))

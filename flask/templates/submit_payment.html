@@ -18,14 +18,16 @@
         
         <label for="recipient">Benéficiaire :</label>
         {%if extern %}
-        <select id="recipient" name="recipient">
+        <select id="recipient" name="recipient"  > 
             {% for recip in extern %}
-            <option value="{{ recip['holderName'] }}">{{ recip['holderName'] }}</option>
+            <option  value="{{ recip['holderName'] }}">{{ recip['holderName'] }}</option>
             {% endfor %}
         
-        </select>
+        </select><br><br>
         {% endif %}
-        <!-- <input type="text" id="recipient" name="recipient"><br><br> -->
+        
+        
+        <a href="/create_exteral_bank_account">Créer un bénéficiaire</a><br><br>
         
         <label for="amount">Montant :</label>
         <input type="number" id="amount" name="amount" ><br><br>
@@ -44,17 +46,17 @@
           
         <label for="comment">Commentaire :</label><br>
         <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br><br>
-        
         <div>
+        <label for="pay_file">Inserez un tableau excel :</label>
+        <input type="file" name="file" id="pay_file">  
+   
         <input type="submit" value="Envoyer">
         </div>
         
     </form>
     
     
-    <form method="POST">
-        <input type="file" name="file" id="pay_file"><input type="submit" value="Envoyer">   
-    </form>
+    
     
     <div class="left-column">
         <p>

@@ -1,6 +1,7 @@
 #Normalize format
 
 import json
+from locale import currency
 
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -143,16 +144,17 @@ def mapping_payment_submit(data:dict) -> dict:
     
     
 
-    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == data['Compte Emetteur'])
-    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderName'] == data['Bénéficiaire'])
+    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == data['Expéditeur'])
+    amount_currency = "".join(k['amountCurrency'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == data['Expéditeur'])
+    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Bénéficiaire'])
     payment_submit = {}
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
-    payment_submit['amount'] = {'value':data['Montant'], 'currency':'EUR'}
+    payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
     payment_submit['desiredExecutionDate'] = data['Date désirée'] if data['Date désirée'] else datetime.today().strftime('%Y-%m-%d') #data['date']
     payment_submit['priorityPaymentOption'] = data['Priorité'] if data['Priorité'] else '24H' #data['priorite']
     payment_submit['feeCurrency'] = 'EUR' 
-    payment_submit['tag'] = data['Libelé'] if data['Libellé'] else ''
+    payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
     payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
     return payment_submit
 

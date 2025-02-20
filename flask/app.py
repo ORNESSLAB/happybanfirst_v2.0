@@ -9,7 +9,9 @@ import redis
 rd = redis.Redis(host='localhost', port=6379, db=0)
 
 extern = json.loads(rd.get('external_bank_accounts_info'))
-pay_history = json.loads(rd.get('payments_histo'))
+pay_history = list(reversed(json.loads(rd.get('payments_histo'))))
+
+extern.insert(0, {'holderIBAN': '--- Choisissez un compte ---'})
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ def get_wallet():
 
 @app.route("/submit_payment", methods=["GET", "POST"])
 def submit_payment():
-    extern.insert(0, {'holderName': '--- Choisissez un compte ---'})
+    
     data = {}
     if request.method == "POST":
         urgency = request.form.get("urgency")
@@ -65,7 +67,7 @@ def submit_payment():
         else:
             data['Bénéficiaire']= recipient
 
-        data['Compte Emetteur'] = request.form.get("source_account")
+        data['Expéditeur'] = request.form.get("source_account")
         data['Commentaire'] = request.form.get("comment")
         data['Libellé']= request.form.get("tag")
         data['Montant']= request.form.get("amount")
@@ -73,11 +75,23 @@ def submit_payment():
         data['Date désirée']= request.form.get("date")
         
         app.logger.debug(f'{data}:   ')
-        result = utils.payload_dict(data=data)
+        result = utils.post_payment_from_form(form_data=data)
+        typo = ""
+        if isinstance(result, int):
+            typo = "int" 
+        if isinstance(result, dict):
+            typo = "dict"
+            if 'rate' not in result['payment'].keys():
+                result['payment']['rate'] = {'currencyPair': 'None', 'midMarket': None, 'date': None, 'coreAsk': None, 'coreBid': None, 'appliedAsk': None, 'appliedBid': 'inconnu'}
+            if 'counterValue' not in result['payment'].keys():
+                result['payment']['counterValue'] = {'value': 'wait', 'currency': 'wait'}
+            pay_history.insert(0,result['payment'])
+        
+
         app.logger.debug(f'{result}:   ')
         
         
-        return render_template("submit_payment.html", data=data, result=result, extern=extern)
+        return render_template("submit_payment.html", data=data, result=result, extern=extern, typo=typo, history=pay_history)
 
     
     if request.method == "POST" and request.files:

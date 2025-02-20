@@ -5,13 +5,13 @@
 from __future__ import absolute_import
 
 import unittest
-from orness.orness_api import IbWalletApi # noqa: E501
-
+from orness import utils
 class TestWalletsApi(unittest.TestCase):
     """WalletsApi unit test stubs"""
 
     def setUp(self):
-        self.api2 = IbWalletApi() # noqa: E501
+         # noqa: E501
+         pass
      
     def tearDown(self):
         pass
@@ -21,7 +21,7 @@ class TestWalletsApi(unittest.TestCase):
 
         Get wallet list  # noqa: E501
         """
-        print(self.api2.wallets_get().json())
+        
 
     def test_wallets_id_balance_date_get(self):
         """Test case for wallets_id_balance_date_get
@@ -35,6 +35,17 @@ class TestWalletsApi(unittest.TestCase):
 
         Get wallet details  # noqa: E501
         """
+    def test_fund_wallet(self): 
+        """
+        Test case for fund_wallet
+        """
+        self.assertTrue(utils.check_account_value('NjczODE', 10))
+    
+    def test_fund_wallet_false(self): 
+        """
+        Test case for fund_wallet
+        """
+        self.assertFalse(utils.check_account_value('NjczODE', 10000))
 
     def test_wallets_post(self):
         """Test case for wallets_post
@@ -42,6 +53,20 @@ class TestWalletsApi(unittest.TestCase):
         Submit a new wallet  # noqa: E501
         """
         pass
+    
+    def test_number_of_same_external_holder_name(self):
+        """
+        Test case for number_of_same_external_holder_name
+        """
+        self.assertEqual(utils.number_of_same_external_holder_name('09cf660e9747a34'), 1)
+    
+    def test_number_of_same_external_holder_name(self):
+        """
+        Test case for number_of_same_external_holder_name
+        """
+        self.assertNotEqual(utils.number_of_same_external_holder_name('314b065159e8e9c'), 1)
+    
+    
 
 
 if __name__ == '__main__':

@@ -21,75 +21,84 @@ class TestPaymentsApi(unittest.TestCase):
     """PaymentsApi unit test stubs"""
 
     def setUp(self):
-        self.file = 'new_payment.xlsx'
-        self.all_wallet_info = utils.get_wallelt_holder_info()
-        self.all_external_bank_bound_user_account = utils.get_external_bank_account_info()
-
-    def tearDown(self):
-        pass
-    def test_check_if_wallet_exist_using_account_number_false(self):
-        self.assertFalse([i['id'] for i in self.all_wallet_info if i['holderIBAN'] == "FR1130002005440000007765L61" ])
+        self.opt = [{'priorityPaymentOption': '24H', 
+                'feePaymentOption': 'BEN', 
+                'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
+                'feeCost': {'value': '0.00', 'currency': 'EUR'}, 
+                'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
+                'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
+                {'priorityPaymentOption': '24H', 'feePaymentOption': 'OUR', 
+                 'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
+                 'feeCost': {'value': '10.00', 'currency': 'EUR'}, 
+                 'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
+                 'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
+                {'priorityPaymentOption': '24H', 'feePaymentOption': 'SHARE', 
+                  'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
+                  'feeCost': {'value': '5.00', 'currency': 'EUR'}, 
+                  'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
+                  'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
+                {'priorityPaymentOption': '48H', 'feePaymentOption': 'BEN', 
+                   'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
+                   'feeCost': {'value': '0.00', 'currency': 'EUR'}, 
+                   'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
+                   'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+                {'priorityPaymentOption': '48H', 'feePaymentOption': 'OUR', 
+                    'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
+                    'feeCost': {'value': '10.00', 'currency': 'EUR'}, 
+                    'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
+                    'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
+                {'priorityPaymentOption': '48H', 'feePaymentOption': 'SHARE', 
+                    'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
+                    'feeCost': {'value': '5.00', 'currency': 'EUR'}, 
+                    'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},  
+                    'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}]
     
-    def test_check_if_wallet_exist_using_account_number_true(self):
-        self.assertTrue([i['id'] for i in self.all_wallet_info if i['holderIBAN'] == "BE39914001921319" ])
     
-    def test_check_if_external_exist_using_account_number_true(self):
-        self.assertTrue([i['id'] for i in self.all_external_bank_bound_user_account if i['holderIBAN'] == "FR1130002005440000007765L61" ])
-    
-    def test_check_if_external_exist_using_account_number_false(self):
-        self.assertFalse([i['id'] for i in self.all_external_bank_bound_user_account if i['holderIBAN'] == "BE39914001921319" ])
-    
-    # def test_payments_id_confirm_put(self):
-    #     """Test case for payments_id_confirm_put
+    def test_payment_from_form(self):
+        subm = {'Priorité': '24H', 'Bénéficiaire': 'FR1130002005440000007765L61', 
+                'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 
+                'Montant': '1', 'Date désirée': ''}
+        self.assertIsInstance(utils.post_payment_from_form(subm), dict)
 
-    #     Confirm a payment  # noqa: E501
-    #     """
-    #     pass
+    def test_payments_options_wallet_id_external_bank_account_id_get(self):
+        """Test case for payments_options_wallet_id_external_bank_account_id_get
 
-    # def test_payments_id_delete(self):
-    #     """Test case for payments_id_delete
-
-    #     Delete a payemt  # noqa: E501
-    #     """
-    #     pass
-
-    # def test_payments_id_get(self):
-    #     """Test case for payments_id_get
-
-    #     Get payment details  # noqa: E501
-    #     """
-    #     pass
-
-    # def test_payments_id_proof_of_transaction_put(self):
-    #     """Test case for payments_id_proof_of_transaction_put
-
-    #     Upload a proof of transaction for a payment  # noqa: E501
-    #     """
-    #     pass
-
-    # def test_payments_options_wallet_id_external_bank_account_id_get(self):
-    #     """Test case for payments_options_wallet_id_external_bank_account_id_get
-
-    #     Get payment options for a wallet and an external bank account  # noqa: E501
-    #     """
-    #     pass
-
-    def test_payments_post_true(self):
-        """Test case for payments_post
-
-        Submit a payment  # noqa: E501
+        Get payment options for a wallet and an external bank account  # noqa: E501
         """
-        submit_pay = utils.post_payment(self.file)
-        self.assertNotIsInstance(submit_pay, str)
-        
+        self.assertIsNotNone(utils.retreive_option_list(wallet_id='NjczODE', external_id='NjczODA'))
 
-    # def test_payments_status_get(self):
-    #     """Test case for payments_status_get
+    # def test_payments_post_true(self):
+    #     """Test case for payments_post
 
-    #     Get payment list by status  # noqa: E501
+    #     Submit a payment  # noqa: E501
     #     """
-    #     pass
+    #     submit_pay = utils.post_payment(self.file)
+    #     self.assertNotIsInstance(submit_pay, str)
+
+      
+
+    def test_payments_status_get(self):
+        """Test case for payments_status_get
+
+        Get payment list by status  # noqa: E501
+        """
+        self.assertIsInstance(utils.get_payments_status('awaitingconfirmation'), dict)
+    
+    def test_payments_status_get(self):
+        """Test case for payments_status_get
+
+        Get payment list by status  # noqa: E501
+        """
+        self.assertIsInstance(utils.get_payments_status('planified'), dict)
+
+    def test_no_priorities_between_two_accounts(self):
+        #OTg1OTE, NjczODE
+        
+        self.assertIsNotNone(utils.retreive_option_list(wallet_id='NjczODE', external_id='NzA2MTA'))
+    
+    def test_get_payment_fee_and_priority(self):
+        self.assertTrue(utils.get_payment_fee_and_priority(options=self.opt, priority='24H'))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

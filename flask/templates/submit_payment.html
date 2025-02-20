@@ -20,7 +20,7 @@
         {%if extern %}
         <select id="recipient" name="recipient"  > 
             {% for recip in extern %}
-            <option  value="{{ recip['holderName'] }}">{{ recip['holderName'] }}</option>
+            <option  value="{{ recip['holderIBAN'] }}">{{ recip['holderIBAN'] }}</option>
             {% endfor %}
         
         </select><br><br>
@@ -30,7 +30,7 @@
         <a href="/create_exteral_bank_account">Créer un bénéficiaire</a><br><br>
         
         <label for="amount">Montant :</label>
-        <input type="number" id="amount" name="amount" ><br><br>
+        <input type="number" id="amount" name="amount" required><br><br>
        
         <label for="tag"> Libélé      :</label>
         <input type="text" id="tag" name="tag"><br><br>
@@ -58,27 +58,34 @@
     
     
     
-    <div class="left-column">
-        <p>
+    <div id="result">
         
-            {% if data and result %}
-            Bénéficiaire :{{ data['Bénéficiaire'] }}<br><br>Montant : {{ data['Montant'] }} <br><br>
+        
+            {% if result  and typo == "dict" %}
+            <!-- Bénéficiaire :{{ data['Bénéficiaire'] }}<br><br>Montant : {{ data['Montant'] }} <br><br>
             Expéditeur: {{ data['Compte Emetteur'] }}<br><br> Date: {{ result['desiredExecutionDate']}}<br><br>
             Urgence: {{ result['priorityPaymentOption'] }}<br><br> Commentaire: {{ result['communication'] }}<br><br>
+             -->
+            <p>Le transfert a été effectué avec succès</p>
+            
+            {% endif %}
+            {% if result == 0 %}
+            <p>Le transfert a échoué. Fond insuffisant</p>
+            
+            {% endif %}
+            {% if result == 1 %}
+            <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
             {% endif %}
             
-            {% if data and result %}
-            {% endif %}
-            
-            </p>
+         
 
         </div>
     </div>
-    <div class="container-two">
+    <div class="container-two" >
         <caption> Historique des transferts </caption> 
-        <div class="table">
+        <div class="table" >
             
-        <table>
+        <table id="histo">
             <thead>
             <tr>
                 <th>ID</th>

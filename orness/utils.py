@@ -213,6 +213,10 @@ def payload_dict(data:dict):
                 logger.error("JSON format is not valid")
         except (TypeError, json.JSONDecodeError) as e:
             logger.error(f"Error processing JSON: {e}")
+    except errorExceptions.NoPriorityError as e:
+        logger.error(f"Error {func}: {e}")
+        traceback.print_exc()
+        return errorExceptions.ERROR_NO_PRIORITY
 
     except errorExceptions.PriorityError as e:
         logger.error(f"Error {func}: {e}")
@@ -446,7 +450,7 @@ def get_external_bank_account_info():
 def confirm_paymet(id):
     api = IbPaymentsApi()
     logger.debug("Payment confirmed")
-    return api.payments_id_confirm_post(id=id)
+    return api.payments_id_confirm_put(id=id)
 
 def delete_paymet(id):
     api = IbPaymentsApi()
@@ -521,7 +525,18 @@ def number_of_same_external_holder_name(holder_name:str) -> int:
     except Exception as e:
         logger.error(e)
         return 0
+
+def get_external_iban_with_same_name(name:str):
+    return [i['holderIBAN'] for i in rd.get('external_bank_accounts_info') if i['holderName'] == name ]
+
+
+
     
+
+def get_list_of_iban_with_same_name():
+    
+    return 0
+
 rd.set('external_bank_accounts_info', json.dumps(get_external_bank_account_info()))
 rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
 rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
@@ -539,7 +554,12 @@ if __name__ == '__main__':
     #jason = {'Priorité': '2H', 'Bénéficiaire': '09cf660e9747a34', 'Expéditeur': 'BE12914005042392', 'Commentaire': '', 'Libellé': '', 'Montant': '14', 'Date désirée': ''}
     jason2 = {'Priorité': '1H', 'Bénéficiaire': '314b065159e8e9c', 'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 'Montant': '2', 'Date désirée': ''}
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    print(post_payment_from_form(jason2))
+    # print(post_payment_from_form(jason2))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))
+    print(rd.get(''))
+
+    
+
+    

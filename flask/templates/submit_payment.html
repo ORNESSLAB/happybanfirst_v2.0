@@ -9,25 +9,61 @@
 </head>
 <body>
     
-    <div class="container">
+    
+    <div  id="wallet_list" class="container">   
         
-    <form method="POST">
+        <form method="POST">
         
-        <label for="source_account">Expéditeur:</label>
-        <input type="text" id="source_account" name="source_account" placeholder="Entrez votre IBAN"><br><br>
-        
-        <label for="recipient">Benéficiaire :</label>
-        {%if extern %}
-        <select id="recipient" name="recipient"  > 
-            {% for recip in extern %}
-            <option  value="{{ recip['holderIBAN'] }}">{{ recip['holderIBAN'] }}</option>
+            <h2> Comptes </h2><br>
+            {% if wallets_list %}
+            {% for wallet in wallets_list%}
+            
+            <div  style="color: rgb(128, 128, 131);" class="wallet">
+                <h2>{{ wallet['amountCurrency'] }}</h2>
+                Compte: {{ wallet['holderName'] }}  <br>         
+                IBAN: {{ wallet['holderIBAN'] }}
+                <p style="color: deeppink;">Solde: {{ wallet['amountValue'] }}</p>
+                <input type="checkbox" value={{ wallet['holderIBAN'] }} id="source_Id" name="source_Id" class="single-select" >
+            </div>
             {% endfor %}
-        
-        </select><br><br>
-        {% endif %}
-        
-        
-        <a href="/create_exteral_bank_account">Créer un bénéficiaire</a><br><br>
+            {% endif %}
+            <script>
+                const checkboxes = document.querySelectorAll('.single-select');
+            
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            checkboxes.forEach(otherCheckbox => {
+                                if (otherCheckbox !== this) {
+                                    otherCheckbox.checked = false;
+                                }
+                            });
+                        }
+                    });
+                });
+            </script>
+            
+            <div>
+            
+            <h2> Bénéficiaire </h2><br>
+            
+                <div class="wallet" style="height: 80px;">
+                    <input style="width: 90%;" list="holderiban" type="text" autocomplete="on" name="ext_iban" id="ext_iban" ></input> <br><br>
+                    <datalist id="holderiban" style="color: rgb(105, 105, 102);" class="external_iban" ></select>
+                    {% if extern %}
+                    {% for ext in extern %}
+                    
+                        <option id="recipient" id="choice_ext_iban" name="choice_ext_iban" value="{{ ext['holderIBAN'] }}"> <p>Compte: {{ ext['holderName'] }} > IBAN: {{ ext['holderIBAN'] }}</p></option>
+                    
+                    {% endfor %}
+                    {% endif %}
+                    </datalist>
+                    <a href="/create_exteral_bank_account" style="color: black; border-bottom: 1px solid black; background-color: rgb(16, 214, 214);">Créer un bénéficiaire</a>
+                </div>
+                
+            </div>
+       
+    
         
         <label for="amount">Montant :</label>
         <input type="number" id="amount" name="amount" required><br><br>
@@ -46,26 +82,24 @@
           
         <label for="comment">Commentaire :</label><br>
         <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br><br>
-        <div>
-        <label for="pay_file">Inserez un tableau excel :</label>
-        <input type="file" name="file" id="pay_file">  
-   
-        <input type="submit" value="Envoyer">
+
+        <div class="container-child">
+            <label for="pay_file">Inserez un tableau excel :</label>
+            <input type="file" name="file" id="pay_file">  
+    
+            <input type="submit" value="Envoyer">
         </div>
         
+
+    
     </form>
-    
-    
     
     
     <div id="result">
         
         
             {% if result  and typo == "dict" %}
-            <!-- Bénéficiaire :{{ data['Bénéficiaire'] }}<br><br>Montant : {{ data['Montant'] }} <br><br>
-            Expéditeur: {{ data['Compte Emetteur'] }}<br><br> Date: {{ result['desiredExecutionDate']}}<br><br>
-            Urgence: {{ result['priorityPaymentOption'] }}<br><br> Commentaire: {{ result['communication'] }}<br><br>
-             -->
+            
             <p>Le transfert a été effectué avec succès</p>
             
             {% endif %}
@@ -79,12 +113,13 @@
             
          
 
-        </div>
     </div>
+        
+    
+    
     <div class="container-two" >
         <caption> Historique des transferts </caption> 
-        <div class="table" >
-            
+        <div class="table" >   
         <table id="histo">
             <thead>
             <tr>
@@ -119,7 +154,9 @@
         </div>
     
     </div>
+    </div>
     
+
     
 </body>
 </html>

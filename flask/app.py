@@ -11,7 +11,8 @@ rd = redis.Redis(host='localhost', port=6379, db=0)
 extern = json.loads(rd.get('external_bank_accounts_info'))
 pay_history = list(reversed(json.loads(rd.get('payments_histo'))))
 
-extern.insert(0, {'holderIBAN': '--- Choisissez un compte ---'})
+wallets = json.loads(rd.get('wallets_info'))
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,20 @@ def get_wallet():
 def submit_payment():
     
     data = {}
+    len_extern = 0
+    list_exteriban = ""
+    if request.method == "POST" and "add_recipient" in request.form:
+        recipient = request.form.get("recipient")
+        list_exteriban = utils.get_external_iban_with_same_name(name=recipient)
+        app.logger.debug(list_exteriban)
+    
+    # for wal in wallets:
+    #     if  wal['holderIBAN'] in request.form:
+    #         app.logger.debug(f"IBAN: {wal['holderIBAN']}")
+   
+
+        
+        return render_template('submit_payment.html', data=data, extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets)
     if request.method == "POST":
         urgency = request.form.get("urgency")
         data['Priorité'] = ""
@@ -60,18 +75,16 @@ def submit_payment():
             data['Priorité'] = "24H"
         if urgency == "Différé":
             data['Priorité'] = "48H"
-        recipient = request.form.get("recipient")
-        if recipient == "--- Choisissez un compte ---":
-            flash("Veuillez choisir un compte")
-            data['Bénéficiaire']= ""
-        else:
-            data['Bénéficiaire']= recipient
+        
+        
+        
+        data['Bénéficiaire']= request.form.get('ext_iban')
 
-        data['Expéditeur'] = request.form.get("source_account")
+        
         data['Commentaire'] = request.form.get("comment")
         data['Libellé']= request.form.get("tag")
         data['Montant']= request.form.get("amount")
-        
+        data['Expéditeur'] = request.form.get("source_Id")
         data['Date désirée']= request.form.get("date")
         
         app.logger.debug(f'{data}:   ')
@@ -82,7 +95,10 @@ def submit_payment():
         if isinstance(result, dict):
             typo = "dict"
             if 'rate' not in result['payment'].keys():
-                result['payment']['rate'] = {'currencyPair': 'None', 'midMarket': None, 'date': None, 'coreAsk': None, 'coreBid': None, 'appliedAsk': None, 'appliedBid': 'inconnu'}
+                result['payment']['rate'] = {'currencyPair': 'None', 
+                                             'midMarket': None, 'date': None, 
+                                             'coreAsk': None, 'coreBid': None, 
+                                             'appliedAsk': None, 'appliedBid': 'inconnu'}
             if 'counterValue' not in result['payment'].keys():
                 result['payment']['counterValue'] = {'value': 'wait', 'currency': 'wait'}
             pay_history.insert(0,result['payment'])
@@ -91,7 +107,7 @@ def submit_payment():
         app.logger.debug(f'{result}:   ')
         
         
-        return render_template("submit_payment.html", data=data, result=result, extern=extern, typo=typo, history=pay_history)
+        return render_template("submit_payment.html", data=data, result=result, extern=extern, list_extern = list_exteriban, typo=typo, history=pay_history, wallets_list=wallets)
 
     
     if request.method == "POST" and request.files:
@@ -108,7 +124,7 @@ def submit_payment():
         
 
    
-    return render_template('submit_payment.html', extern=extern, history=pay_history)
+    return render_template('submit_payment.html', extern=extern, history=pay_history, len_extern=len_extern, wallets_list=wallets)
 
 @app.route("/create_exteral_bank_account", methods=["GET", "POST"])
 def create_account():
@@ -125,4 +141,5 @@ if __name__ == "__main__":
     # print(t)
 
     #print(f'{i["holderName"]}' for i in extern)
+    
     app.run(debug=True, port=8980)

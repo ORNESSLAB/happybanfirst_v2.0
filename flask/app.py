@@ -128,12 +128,48 @@ def submit_payment():
 
 @app.route("/create_exteral_bank_account", methods=["GET", "POST"])
 def create_account():
-    return render_template("create_external.html")
+    data = {}
+    data['holder'] = {}
+    data['holderBank'] = {}
+    data["holderBank"]["address"] = {}
+    data["holder"]["address"] = {}
+    if request.method == "POST":
+        data["currency"] = request.form.get("currency")
+        data["accountNumber"] = request.form.get("iban")
+        data["tag"] = request.form.get("tag")
+        data["correspondentBankBic"] = request.form.get("correspondentBank")
+
+        data["holder"]["name"] = request.form.get("holderName")
+        data["holder"]["address"]["street"] =  request.form.get("holderStreet")
+        data["holder"]["address"]["postCode"] = request.form.get("holderPostalCode")
+        data["holder"]["address"]["city"] = request.form.get("holderCity")
+        data["holder"]["address"]["country"] = request.form.get("holderCountry")
+        data["holder"]["type"] = request.form.get("holderType")
+
+        data["holderBank"]["address"]["street"]= request.form.get("bankStreet")
+        data["holderBank"]["address"]["postCode"] = request.form.get("bankPostalCode")
+        data["holderBank"]["address"]["city"] = request.form.get("bankCity")
+        data["holderBank"]["address"]["country"] = request.form.get("bankCountry")
+        data["holderBank"]["address"]["state"]= request.form.get("bankState")
+        data["holderBank"]["bic"] = request.form.get("bic")
+        data["holderBank"]["name"] = request.form.get("bankName")
+        data["holderBank"]["clearingCodeType"] = request.form.get("clearingCodeType")
+        data["holderBank"]["clearingCode"] = request.form.get("clearingCode")
+
+        result = 0 #utils.create_beneficiary(data)
+        
+        app.logger.debug(f"external: {data}")
+        app.logger.debug(f"{result}:   ")
+        return render_template("submit_payment.html", data=data, result=result)
+        
+
+
+    return render_template("create_external.html", data=data)
 
 
 
 if __name__ == "__main__":
-    #print(f'{os.getenv("IB_PASSWORD")}')
+    #print(f"{os.getenv("IB_PASSWORD")}")
     # t = ""
     # for i in extern:
     #     t = i["holderName"]

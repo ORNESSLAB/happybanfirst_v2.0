@@ -1,0 +1,85 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for Root",
+    "type": "object",
+    "properties": {
+      "currency": {
+        "type": "string"
+      },
+      "tag": {
+        "type": "string"
+      },
+      "accountNumber": {
+        "type": "string"
+      },
+      "correspondentBank": {
+        "type": "string"
+      },
+      "holderBank": {
+        "type": "object",
+        "properties": {
+          "bic": {
+            "type": "string"
+          },
+          "clearingCodeType": {
+            "type": "string"
+          },
+          "clearingCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "postCode": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {},
+              "country": {
+                "type": "string"
+              }
+            }
+            
+          }
+        }
+        
+      },
+      "holder": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "postCode": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {},
+              "country": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }

@@ -172,7 +172,39 @@ def mapping_wallets_submit(data:dict) -> dict:
     wallet_submit["holder"]["address"]["province"] = data['province'] if data['province'] else ''
     wallet_submit["holder"]["address"]["country"] = coco.convert(data['pays'], to='ISO2') if data['pays'] else ''
     return wallet_submit
+
+def mapping_ben_creation(data:dict):
+    ben = {}
+    ben['holder'] = {}
+    ben['holderBank'] = {}
+    ben["holderBank"]["address"] = {}
+    ben["holder"]["address"] = {}
+
+    ben["currency"]             = data["currency"]          if data["currency"]          else ""  
+    ben["accountNumber"]        = data["accountNumber"]     if data["accountNumber"]     else ""
+    ben["tag"]                  = data["tag"]               if data["tag"]               else ""
+    ben["correspondentBankBic"] = data["correspondentBankBic"] if data["correspondentBankBic"] else ""
     
+    ben["holder"]["name"] = data["holder"]["name"] if data["holder"]["name"] else ""
+    ben["holder"]["address"]["street"] =  data["holder"]["address"]["street"] if data["holder"]["address"]["street"] else ""
+    ben["holder"]["address"]["postCode"] = data["holder"]["address"]["postCode"] if data["holder"]["address"]["postCode"] else ""
+    ben["holder"]["address"]["city"] = data["holder"]["address"]["city"] if data["holder"]["address"]["city"] else ""
+    ben["holder"]["address"]["country"] = data["holder"]["address"]["country"] if data["holder"]["address"]["country"] else ""
+    ben["holder"]["type"] = data["holder"]["type"] if data["holder"]["type"] else ""
+    ben["holderBank"]["address"]["street"]= data["holderBank"]["address"]["street"] if data["holderBank"]["address"]["street"] else ""
+    ben["holderBank"]["address"]["postCode"] = data["holderBank"]["address"]["postCode"]  if data["holderBank"]["address"]["postCode"] else  ""
+    ben["holderBank"]["address"]["city"] = data["holderBank"]["address"]["city"]  if data["holderBank"]["address"]["city"] else ""
+    ben["holderBank"]["address"]["country"] = data["holderBank"]["address"]["country"] if data["holderBank"]["address"]["country"] else ""
+    ben["holderBank"]["address"]["state"]= data["holderBank"]["address"]["state"] if data["holderBank"]["address"]["state"] else ""
+    ben["holderBank"]["bic"] = data["holderBank"]["bic"] if data["holderBank"]["bic"] else ""
+    ben["holderBank"]["name"] = data["holderBank"]["name"]  if data["holderBank"]["name"]  else ""
+    ben["holderBank"]["clearingCodeType"] = data["holderBank"]["clearingCodeType"] if data["holderBank"]["clearingCodeType"] else ""
+    ben["holderBank"]["clearingCode"] = data["holderBank"]["clearingCode"] if data["holderBank"]["clearingCode"] else ""
+
+
+
+    return  ben
+
 if __name__ == '__main__':
    print(rd.get('wallets_info'))
     

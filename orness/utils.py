@@ -5,6 +5,8 @@ import os
 import sys
 import pprint
 import inspect
+from textwrap import indent
+from tkinter import NO
 import traceback
 from orness import error_exception as  errorExceptions
 import pandas as pd
@@ -463,24 +465,6 @@ def modify_env(key, value):
     for k, v in variables.items():
         set_key('.env', k, v)
 
-
-def create_external_bank_account(data: dict) -> dict:
-    """
-    Create an external bank account.
-
-    This function uses the IbExternalBankAccountApi to create a new external bank account.
-
-    :param data: A dictionary containing the details of the external bank account to create.
-    :return: A dictionary containing the details of the newly created external bank account.
-    """
-    try:
-        api = IbExternalBankAccountApi()
-        return api.external_bank_accounts_post(external_bank_account=data).json()
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
-
-
-
 def authentication(user_id, password):
     try:
         modify_env('IB_USERNAME', user_id)
@@ -529,13 +513,22 @@ def number_of_same_external_holder_name(holder_name:str) -> int:
 def get_external_iban_with_same_name(name:str):
     return [i['holderIBAN'] for i in rd.get('external_bank_accounts_info') if i['holderName'] == name ]
 
+def check_if_beneficiary_name(holderName:str):
+    return any(i['holderName'] == holderName  for i in rd.get('external_bank_accounts_info') )
 
+def create_beneficiary(data:dict):
+    try:
+        requete = json.loads(json.dumps(mappings.mapping_ben_creation(data), indent=2))
+        test = mappings.valid(requete, "orness/file/create_beneficiary_schema.json")
+        print(f"test valid: {test}")
+        if test:
+            api = IbExternalBankAccountApi()
+            return api.external_bank_accounts_post(external_bank_account=requete)
+    except ApiException as e:
+        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+        traceback.print_exc()
+        return None
 
-    
-
-def get_list_of_iban_with_same_name():
-    
-    return 0
 
 rd.set('external_bank_accounts_info', json.dumps(get_external_bank_account_info()))
 rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
@@ -553,12 +546,44 @@ if __name__ == '__main__':
     #jason = {'Compte Emetteur': 'BE39914001921319', 'Bénéficiaire': 'FR1130002005440000007765L61', 'Montant': 14, 'Libélé': 'jjj', 'Commentaire': 'opoo', 'Date désirée': '2025-02-17'}
     #jason = {'Priorité': '2H', 'Bénéficiaire': '09cf660e9747a34', 'Expéditeur': 'BE12914005042392', 'Commentaire': '', 'Libellé': '', 'Montant': '14', 'Date désirée': ''}
     jason2 = {'Priorité': '1H', 'Bénéficiaire': '314b065159e8e9c', 'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 'Montant': '2', 'Date désirée': ''}
+    ext = {
+    "currency": "EUR",
+    "tag": "mon extern",
+    "accountNumber": "FR1130002005440000007765L61",
+    "correspondentBankBic": "",
+    "holderBank": {
+        "bic": "CRLYFRPPXXX",
+        "clearingCodeType": "",
+        "clearingCode": "3000200561",
+        "name": "LE CREDIT LYONNAIS",
+        "address": {
+            "street": "19 BOULEVARD DES ITALIENS",
+            "postCode": "75002",
+            "city": "paris",
+            "country": "FR",
+            "state": ""
+        }
+    },
+    "holder": {
+        "name": "Julien",
+        "type": "corporate",
+        "address": {
+            "street": "21 rue du lac",
+            "postCode": "21000",
+            "city": "dijon",
+            "country": "FR",
+            "state": ""
+        }
+    }
+}
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
     # print(post_payment_from_form(jason2))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))
-    print(rd.get(''))
+    print(len("FR1130002005440000007765L61"))
+    print(create_beneficiary(ext))
+    
 
     
 

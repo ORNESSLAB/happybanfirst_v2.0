@@ -152,8 +152,8 @@ def mapping_payment_submit(data:dict) -> dict:
     payment_submit['sourceWalletId'] = source_Id
     payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
     payment_submit['desiredExecutionDate'] = data['Date désirée'] if data['Date désirée'] else datetime.today().strftime('%Y-%m-%d') #data['date']
-    payment_submit['priorityPaymentOption'] = data['Priorité'] if data['Priorité'] else '24H' #data['priorite']
-    payment_submit['feeCurrency'] = 'EUR' 
+    payment_submit['priorityPaymentOption'] = data['Urgence'] if data['Urgence'] else '24H' #data['priorite']
+    payment_submit["feePaymentOption"] = data['Détails des frais'] if data['Détails des frais'] else 'OUR'
     payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
     payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
     return payment_submit
@@ -185,8 +185,8 @@ def mapping_ben_creation(data:dict):
     ben["tag"]                  = data["tag"]               if data["tag"]               else ""
     ben["correspondentBankBic"] = data["correspondentBankBic"] if data["correspondentBankBic"] else ""
     
-    ben["holder"]["name"] = data["holder"]["name"] if data["holder"]["name"] else ""
-    ben["holder"]["address"]["street"] =  data["holder"]["address"]["street"] if data["holder"]["address"]["street"] else ""
+    ben["holder"]["name"]                  = data["holder"]["name"] if data["holder"]["name"] else ""
+    ben["holder"]["address"]["street"]     = data["holder"]["address"]["street"] if data["holder"]["address"]["street"] else ""
     ben["holder"]["address"]["postCode"] = data["holder"]["address"]["postCode"] if data["holder"]["address"]["postCode"] else ""
     ben["holder"]["address"]["city"] = data["holder"]["address"]["city"] if data["holder"]["address"]["city"] else ""
     ben["holder"]["address"]["country"] = data["holder"]["address"]["country"] if data["holder"]["address"]["country"] else ""
@@ -194,7 +194,7 @@ def mapping_ben_creation(data:dict):
     ben["holderBank"]["address"]["street"]= data["holderBank"]["address"]["street"] if data["holderBank"]["address"]["street"] else ""
     ben["holderBank"]["address"]["postCode"] = data["holderBank"]["address"]["postCode"]  if data["holderBank"]["address"]["postCode"] else  ""
     ben["holderBank"]["address"]["city"] = data["holderBank"]["address"]["city"]  if data["holderBank"]["address"]["city"] else ""
-    ben["holderBank"]["address"]["country"] = data["holderBank"]["address"]["country"] if data["holderBank"]["address"]["country"] else ""
+    ben["holderBank"]["address"]["country"] = coco.convert(data["holderBank"]["address"]["country"], to='ISO2') if data["holderBank"]["address"]["country"] else ""
     ben["holderBank"]["address"]["state"]= data["holderBank"]["address"]["state"] if data["holderBank"]["address"]["state"] else ""
     ben["holderBank"]["bic"] = data["holderBank"]["bic"] if data["holderBank"]["bic"] else ""
     ben["holderBank"]["name"] = data["holderBank"]["name"]  if data["holderBank"]["name"]  else ""

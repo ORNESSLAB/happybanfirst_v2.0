@@ -21,12 +21,17 @@ from orness.cache import RedisCache
 
 load_dotenv()
 
-#TODO: verifier que le wallet a bien assez d'argent
-#TODO: verifier les option de frais entre deux contreparties (counterparty)
-#TODO: si l'external bank account n'existe pas, demander d'en ajouter 
+#TODO: verifier que le wallet a bien assez d'argent -> OK mais verifier aussi que les frais peuvent etre payés
+#TODO: verifier les option de frais entre deux contreparties (counterparty) 
+#TODO: lors d'un virement SWIFT, il faut indiquer paie les frais de transfert (BEN -> bénéficiaire
+#      OUR -> l'Emetteur (par defaut), SHA -> partagés.
+#      puis quand on sait qui paie les frais, il reste à dicider sur l'urgence du transfert (1h, 24h, 48h)
+
+#TODO: si l'external bank account n'existe pas, demander d'en ajouter  
 #TODO: pour les resutat des paiement, creer un mappage pour les options
-#TODO: creer une fonction qui confirme le paiement
-#TODO: creer une fonction qui annule le paiement
+#TODO: creer une fonction qui confirme le paiement -> OK
+#TODO: creer une fonction qui annule le paiement -> OK
+
 
 
 rd = RedisCache()
@@ -82,7 +87,8 @@ def read_data_from_file(filename):
     
     return myjson
 
-def get_payment_fee_and_priority(options: list, priority: str) -> dict:
+
+def get_payment_fee_and_priority(options: list, priority="24H", who_pay_fees:str = "OUR" ) -> dict:
         
         """
             Takes a list of options and a priority and returns the options that match the given priority.
@@ -101,18 +107,22 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
         """
         frame = inspect.currentframe()
         func = frame.f_code.co_name
+        
         try:
+            if who_pay_fees not in ["OUR", "SHARE", "BEN"] or priority not in ["1H", "24H", "48H"]:
+                logger.error(f"Invalid priority or who_pay_fees: {priority}, {who_pay_fees}")
+                raise errorExceptions.PriorityError("Invalid priority or who_pay_fees")
             
             if not options:
                 logger.error(f"No priorities found between the two accounts")
                 raise errorExceptions.NoPriorityError("No priorities found")
-            if [option for option in options if option["priorityPaymentOption"] == priority.upper()] == []:
+            if [option for option in options if option["priorityPaymentOption"] == priority.upper() and option["feePaymentOption"] == who_pay_fees.upper()] == []:
                 
                 logger.error(f"Priority {priority} not found in options: {options}")
-                raise errorExceptions.PriorityError("Priority not found")
+                raise errorExceptions.PriorityError("Priorities not found between the two accounts")
                 
             else:
-                result = [option for option in options if option["priorityPaymentOption"] == priority.upper()]
+                result = [option for option in options if option["priorityPaymentOption"] == priority.upper() and option["feePaymentOption"] == who_pay_fees.upper()]
                 print("type de Result: {func}", type(result) , "taille de result: ", result)
                 return {
                     "feePaymentOption": result[0]["feePaymentOption"],
@@ -155,14 +165,14 @@ def payload(excel_data_filename:str):
             # Get fee priority Payment Options
             options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
             logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
-            properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+            fee_options = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], who_pay_fees=payment_submit["feePaymentOption"], options=options)
             
-            if properties == errorExceptions.ERROR_PRIORITY:
+            if fee_options == errorExceptions.ERROR_PRIORITY:
                 continue
-            elif not properties:
+            elif not fee_options:
                 continue
             else:
-                payment_submit["feePaymentOption"] = properties['feePaymentOption']
+                payment_submit["feeCurrency"] = fee_options["feeCurrency"]
 
             # Serialize and validate JSON
             try:
@@ -198,13 +208,13 @@ def payload_dict(data:dict):
         # Get fee priority Payment Options
         options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
         logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
-        properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
-        if properties == errorExceptions.ERROR_PRIORITY:
+        fee_options = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options, who_pay_fees=payment_submit["feePaymentOption"])
+        if fee_options == errorExceptions.ERROR_PRIORITY:
             raise errorExceptions.PriorityError("priority not found")
-        elif properties == errorExceptions.ERROR_NO_PRIORITY:
+        elif fee_options == errorExceptions.ERROR_NO_PRIORITY:
             raise errorExceptions.NoPriorityError("there is no priority found between the two accounts")
         else:
-            payment_submit["feePaymentOption"] = properties['feePaymentOption']
+            payment_submit["feeCurrency"] = fee_options["feeCurrency"]
 
                 # Serialize and validate JSON
         try:

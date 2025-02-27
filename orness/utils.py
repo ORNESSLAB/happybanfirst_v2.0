@@ -1,12 +1,11 @@
 import json
 import logging
-from math import e, log
+
 import os
 import sys
 import pprint
 import inspect
-from textwrap import indent
-from tkinter import NO
+
 import traceback
 from orness import error_exception as  errorExceptions
 import pandas as pd
@@ -30,6 +29,7 @@ load_dotenv()
 
 
 rd = RedisCache()
+rd.clear()
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,6 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
                 
             else:
                 result = [option for option in options if option["priorityPaymentOption"] == priority.upper()]
-                print("type de Result: {func}", type(result) , "taille de result: ", result)
                 return {
                     "feePaymentOption": result[0]["feePaymentOption"],
                     "feeValue": result[0]["feeCost"]["value"],
@@ -136,105 +135,55 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
 def payload(excel_data_filename:str):
     #if we want to ask the user to select the priority option
     payload_returned = []
-    try:
-        json_data_from_excel = read_data_from_file(excel_data_filename)
-        for data in json_data_from_excel:
-            payment_submit = mappings.mapping_payment_submit(data)
-
-            if not payment_submit['externalBankAccountId']:
-                logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
-                continue
-            if not payment_submit['sourceWalletId']:
-                logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
-                continue
-            if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
-                logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
-                continue
-
-            #payload_returned.append(payload_dict(payment_submit))
-            # Get fee priority Payment Options
-            options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
-            logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
-            properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
-            
-            if properties == errorExceptions.ERROR_PRIORITY:
-                continue
-            elif not properties:
-                continue
-            else:
-                payment_submit["feePaymentOption"] = properties['feePaymentOption']
-
-            # Serialize and validate JSON
-            try:
-                dump = json.loads(json.dumps(payment_submit, indent=2))
-                if mappings.valid(json_data_to_check=dump, json_schema_file_dir="orness/file/submit_payment_schema.json"):
-                    payload_returned.append(dump)
-                else:
-                    logger.error("JSON format is not valid")
-            except (TypeError, json.JSONDecodeError) as e:
-                logger.error(f"Error processing JSON: {e}")
-
-    except TypeError as e:
-        logger.error(f"Error : {e}")
-        traceback.print_exc()
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
-        traceback.print_exc()
-    logger.debug(f'payload_returned: {pprint.pprint(payload_returned)}')
-
-    return payload_returned
-def payload_dict(data:dict):
-    frame = inspect.currentframe()
-    func = frame.f_code.co_name
     
-    payment_submit = mappings.mapping_payment_submit(data)
-    print("Fund: ",check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])))
-
-    try:
+    json_data_from_excel = read_data_from_file(excel_data_filename)
+    for data in json_data_from_excel:
+        payment_submit = mappings.mapping_payment_submit(data)
+        if not payment_submit['externalBankAccountId']:
+            logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
+            continue
+        if not payment_submit['sourceWalletId']:
+            logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
+            continue
         if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
-                logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
-                raise errorExceptions.NoFund("fund not enough")
-                
+            logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
+            continue
+        #payload_returned.append(payload_dict(payment_submit))
         # Get fee priority Payment Options
         options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
         logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
         properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+        
         if properties == errorExceptions.ERROR_PRIORITY:
-            raise errorExceptions.PriorityError("priority not found")
-        elif properties == errorExceptions.ERROR_NO_PRIORITY:
-            raise errorExceptions.NoPriorityError("there is no priority found between the two accounts")
+            continue
+        elif not properties:
+            continue
         else:
             payment_submit["feePaymentOption"] = properties['feePaymentOption']
-
-                # Serialize and validate JSON
-        try:
-            dump = json.loads(json.dumps(payment_submit, indent=2))
-            if mappings.valid(json_data_to_check=dump, json_schema_file_dir="orness/file/submit_payment_schema.json"):
-                return dump
-            else:
-                logger.error("JSON format is not valid")
-        except (TypeError, json.JSONDecodeError) as e:
-            logger.error(f"Error processing JSON: {e}")
-    except errorExceptions.NoPriorityError as e:
-        logger.error(f"Error {func}: {e}")
-        traceback.print_exc()
-        return errorExceptions.ERROR_NO_PRIORITY
-
-    except errorExceptions.PriorityError as e:
-        logger.error(f"Error {func}: {e}")
-        traceback.print_exc()
+            payload_returned.append(payment_submit)
+    return payload_returned
+def payload_dict(data:dict):
+    
+    payment_submit = mappings.mapping_payment_submit(data)
+    if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
+            logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
+            raise errorExceptions.NoFund("fund not enough")
+            
+    # Get fee priority Payment Options
+    options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
+    logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
+    properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+    if properties == errorExceptions.ERROR_PRIORITY:
         return errorExceptions.ERROR_PRIORITY
-    except errorExceptions.NoFund as e:
-        logger.error(f"Error  {func}: {e}")
-        traceback.print_exc()
-        return errorExceptions.ERROR_FUNDS
-    except TypeError as e:
-        logger.error(f"Error {func}: {e}")
-        traceback.print_exc()
-      
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
-        traceback.print_exc()
+    elif properties == errorExceptions.ERROR_NO_PRIORITY:
+        return errorExceptions.ERROR_NO_PRIORITY
+    else:
+        payment_submit["feePaymentOption"] = properties['feePaymentOption']
+        return payment_submit
+    
+    
+    
+    
 
 
 
@@ -251,80 +200,131 @@ def post_payment(excel_data_filename: str) -> list:
 
     payment_submit = payload(excel_data_filename)
     post_payment_response = []
+    print(payment_submit)
     
-    try:
-        for payment in payment_submit:
-            post_payment_response.append(post_payment_from_form(payment))
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
-    # try:
-        
-    #     for payment in payment_submit:
-    #         if payment == errorExceptions.ERROR_FUNDS:
-    #             raise errorExceptions.NoFund("funds not enough")
-    #         if payment == errorExceptions.ERROR_PRIORITY:
-    #             raise errorExceptions.PriorityError("priority not found")
-    #                 #logger.info("Start payment of {}".format(pprint.pprint(payment)))
+    for payment in payment_submit:
+        try:
+            print(f"pay type:{type(payment)}")
+            
+            
+            if payment == errorExceptions.ERROR_FUNDS:
+                continue
+            if payment == errorExceptions.ERROR_PRIORITY:
+                continue
+            if payment_submit == errorExceptions.ERROR_NO_PRIORITY:
+                continue
+                        #logger.info("Start payment of {}".format(pprint.pprint(payment)))
 
-    #         api = IbPaymentsApi()
-    #         post_payment_response.append(api.payments_post(payment=payment).json())
-                
-    #     return post_payment_response
-    # except errorExceptions.PriorityError as e:
-    #     logger.error(f"Error : {e}")
-    #     traceback.print_exc()
-    #     return errorExceptions.ERROR_PRIORITY
-    # except errorExceptions.NoFund as e:
-    #     logger.error(f"Error : {e}")
-    #     traceback.print_exc()
-    #     return errorExceptions.ERROR_FUNDS
-    # except ApiException as e:
-    #     logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+            api = IbPaymentsApi()
+            post_payment_response.append(api.payments_post(payment=payment).json())
+                    
+            
+        except errorExceptions.PriorityError as e:
+            logger.error(f"Error : {e}")
+            traceback.print_exc()
+            return errorExceptions.ERROR_PRIORITY
+        except errorExceptions.NoFund as e:
+            logger.error(f"Error : {e}")
+            traceback.print_exc()
+            return errorExceptions.ERROR_FUNDS
+        except ApiException as e:
+            logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
 
     return post_payment_response
     
-def post_payment_from_form(form_data: dict) -> list:
-    frame = inspect.currentframe()
-    func = frame.f_code.co_name
-    payment_submit = payload_dict(form_data)
-    print("Payment submit: ", payment_submit)
+def post_payment_from_form(form_data: dict):
+    
 
+    payment_submit = payload_dict(form_data)
+#     test = {
+#   "sourceWalletId": "NjczODE",
+#   "externalBankAccountId": "Nzk0MDk",
+#   "amount": {
+#     "value": "2",
+#     "currency": "USD"
+#   },
+#   "desiredExecutionDate": "2025-03-01",
+#   "feeCurrency": "USD",
+#   "feePaymentOption": "BEN",
+#   "priorityPaymentOption": "48H",
+#   "tag": "",
+#   "communication": ""
+# }
+    test = {
+        'sourceWalletId': 'NjczODE',
+        'externalBankAccountId': 'ODEzMTU',
+        'amount': {
+          'value': '45',
+          'currency': 'EUR'
+           },
+        'desiredExecutionDate': '2025-02-28',
+        'feeCurrency': 'USD',
+        'feePaymentOption': 'BEN',
+        'priorityPaymentOption': '24H',
+        'tag': 'string',
+        'communication': 'string'
+    }
+    print(payment_submit)
+
+    print(mappings.valid(json_data_to_check=payment_submit, json_schema_file_dir="orness/file/submit_payment_schema.json"))
+    return transfert(payment_to_submit=payment_submit)
+
+   
+
+def transfert(payment_to_submit:dict):
+    
+    """
+    Make a payment using the provided payment information.
+    
+    The function will validate the payment information, then use the API
+    to make the payment. The function will return the response from the API
+    as a dictionary.
+    
+    If there is an error, the function will log the error and return
+    an appropriate error code.
+    example: result = {
+    'payment': {
+        'id': 'MzM1NDI2',
+        'status': 'awaitingconfirmation',
+        'createdDate': '2025-02-27 10:12:57',
+        'desiredExecutionDate': '2025-02-28',
+        'executionDate': None,
+        'amount': {
+            'value': '14.00',
+            'currency': 'EUR'
+            },
+        'tag': 'jjj',
+        'externalBankAccountId': 'ODEzMTU',
+        'sourceWalletId': 'NjczODE',
+        'sourceWalletNumber': None,
+        'communication': 'OPOO ',
+        'priorityPaymentOption': 'normal',
+        'feePaymentOption': 'BEN',
+        'feePaymentAmount': {
+            'value': '0.00',
+            'currency': None
+            }
+        }
+    }
+    """
     try:
-        if payment_submit == errorExceptions.ERROR_FUNDS:
-            raise errorExceptions.NoFund("funds not enough")
-        if payment_submit == errorExceptions.ERROR_PRIORITY:
-            raise errorExceptions.PriorityError("priority not found")
-        if payment_submit == errorExceptions.ERROR_NO_PRIORITY:
-            raise errorExceptions.NoPriorityError("no priority found between the two accounts")
-            
+          
         
         api = IbPaymentsApi()
-        post_payment_response = api.payments_post(payment=payment_submit).json()
+        post_payment_response = api.payments_post(payment=payment_to_submit).json()
         return post_payment_response
     
-    except errorExceptions.NoPriorityError as err1:
-        logger.error(f"Error :{func} {err1}")
-        traceback.print_exc()
-        return errorExceptions.ERROR_NO_PRIORITY
     
-    except errorExceptions.PriorityError as err2:
-        logger.error(f"Error [{func}]: {err2}")
-        traceback.print_exc()
-        return errorExceptions.ERROR_PRIORITY
-    except errorExceptions.NoFund as err3:
-        logger.error(f"Error [{func}]: {err3}")
-        traceback.print_exc()
-        return errorExceptions.ERROR_FUNDS
     except ApiException as e:
         logger.error(f"Error  [postfromform]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
-    
+        return e.status
 
 def create_wallets(excel_data_filename: str) -> list:
     
     try:
         wallets = walletload(excel_data_filename)
         for wallet in wallets:
-            logger.debug(f"Create wallet {log.display_format_data(wallet)}")
+            logger.debug(f"Create wallet {lwallet}")
             api = IbWalletApi()
             api.wallets_post(wallet=wallet)
     except ApiException as e:
@@ -338,8 +338,8 @@ def retreive_option_list(wallet_id:str, external_id:str) -> list:
     :param external_id: The id of the external bank account
     :return: The list of options for the given wallet and external bank account
     """
-    print("Wallet id: ", wallet_id)
-    print("External id: ", external_id)
+    # print("Wallet id: ", wallet_id)
+    # print("External id: ", external_id)
     try:
         api = IbPaymentsApi()
         if check_if_external_bank_account_exist(external_bank_account_id=external_id) and check_if_wallet_exist(wallet_id=wallet_id):
@@ -441,7 +441,8 @@ def get_external_bank_account_info():
     logger.debug("Get external bank BICs")
     try:
         accounts = get_external_bank_accounts()
-        list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber']} for acc in accounts['accounts']]
+        
+        list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber'], 'currency': acc['currency']} for acc in accounts['accounts']]
         return list_info
     except TypeError:
         logger.error("User not found")
@@ -537,14 +538,22 @@ rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
     #print(get_wallets())
-    # print(post_payment(file_a))
+    print(post_payment(file_a))
     #print(get_wallet_holder_info())
     #print(list_wallets_from_file(file_a))
     #retreive_option_list(wallet_id="", external_id="Njc1NzI")
     #print(check_if_external_bank_account_exist(external_bank_account_id="Njc1NzI"))
     #payload(file_a)
-    #jason = {'Compte Emetteur': 'BE39914001921319', 'Bénéficiaire': 'FR1130002005440000007765L61', 'Montant': 14, 'Libélé': 'jjj', 'Commentaire': 'opoo', 'Date désirée': '2025-02-17'}
-    #jason = {'Priorité': '2H', 'Bénéficiaire': '09cf660e9747a34', 'Expéditeur': 'BE12914005042392', 'Commentaire': '', 'Libellé': '', 'Montant': '14', 'Date désirée': ''}
+    kg={"Bénéficiaire": "10943409100132",
+        "Expéditeur": "BE39914001921319",
+        "Commentaire": "",
+        "Libellé": "",
+        "Montant": "14",
+        "Date désirée": "2025-02-28",
+        "Urgence": "",
+        "Détails des frais": ""
+    }
+
     jason2 = {'Priorité': '1H', 'Bénéficiaire': '314b065159e8e9c', 'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 'Montant': '2', 'Date désirée': ''}
     ext = {
     "currency": "EUR",
@@ -577,12 +586,12 @@ if __name__ == '__main__':
     }
 }
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    # print(post_payment_from_form(jason2))
+    #print(post_payment_from_form(kg))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))
-    print(len("FR1130002005440000007765L61"))
-    print(create_beneficiary(ext))
+    #print(rd.get('external_bank_accounts_info'))
+    
     
 
     

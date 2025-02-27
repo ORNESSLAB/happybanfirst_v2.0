@@ -21,44 +21,61 @@ class TestPaymentsApi(unittest.TestCase):
     """PaymentsApi unit test stubs"""
 
     def setUp(self):
-        self.opt = [{'priorityPaymentOption': '24H', 
-                'feePaymentOption': 'BEN', 
-                'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
-                'feeCost': {'value': '0.00', 'currency': 'EUR'}, 
-                'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
-                'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
-                {'priorityPaymentOption': '24H', 'feePaymentOption': 'OUR', 
-                 'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
-                 'feeCost': {'value': '10.00', 'currency': 'EUR'}, 
-                 'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
-                 'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
-                {'priorityPaymentOption': '24H', 'feePaymentOption': 'SHARE', 
-                  'priorityCost': {'value': '6.00', 'currency': 'EUR'}, 
-                  'feeCost': {'value': '5.00', 'currency': 'EUR'}, 
-                  'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
-                  'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
-                {'priorityPaymentOption': '48H', 'feePaymentOption': 'BEN', 
-                   'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
-                   'feeCost': {'value': '0.00', 'currency': 'EUR'}, 
-                   'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
-                   'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
-                {'priorityPaymentOption': '48H', 'feePaymentOption': 'OUR', 
-                    'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
-                    'feeCost': {'value': '10.00', 'currency': 'EUR'}, 
-                    'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'}, 
-                    'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}, 
-                {'priorityPaymentOption': '48H', 'feePaymentOption': 'SHARE', 
-                    'priorityCost': {'value': '0.00', 'currency': 'EUR'}, 
-                    'feeCost': {'value': '5.00', 'currency': 'EUR'}, 
-                    'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},  
-                    'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}]
+        self.opt = [
+            {'priorityPaymentOption': '24H', 'feePaymentOption': 'BEN',
+             'priorityCost': {'value': '6.00', 'currency': 'EUR'},
+             'feeCost': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+            {'priorityPaymentOption': '24H', 'feePaymentOption': 'OUR',
+             'priorityCost': {'value': '6.00', 'currency': 'EUR'},
+             'feeCost': {'value': '10.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+            {'priorityPaymentOption': '24H', 'feePaymentOption': 'SHARE',
+             'priorityCost': {'value': '6.00', 'currency': 'EUR'},
+             'feeCost': {'value': '5.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+            {'priorityPaymentOption': '48H', 'feePaymentOption': 'BEN',
+             'priorityCost': {'value': '0.00', 'currency': 'EUR'},
+             'feeCost': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+            {'priorityPaymentOption': '48H', 'feePaymentOption': 'OUR',
+             'priorityCost': {'value': '0.00', 'currency': 'EUR'},
+             'feeCost': {'value': '10.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}},
+            {'priorityPaymentOption': '48H', 'feePaymentOption': 'SHARE',
+             'priorityCost': {'value': '0.00', 'currency': 'EUR'},
+             'feeCost': {'value': '5.00', 'currency': 'EUR'},
+             'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
+             'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}]
     
     
     def test_payment_from_form(self):
-        subm = {'Priorité': '24H', 'Bénéficiaire': 'FR1130002005440000007765L61', 
-                'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 
-                'Montant': '1', 'Date désirée': ''}
-        pay = utils.post_payment_from_form(subm)
+        test = {
+        "sourceWalletId": "NjczODE",
+        "externalBankAccountId": "ODEzMTU",
+        "amount": {
+          "value": "45",
+          "currency": "USD"
+           },
+        "desiredExecutionDate": "2025-02-28",
+        "feeCurrency": "USD",
+        "feePaymentOption": "BEN",
+        "priorityPaymentOption": "24H",
+        "tag": "string",
+        "communication": "string"
+    }
+        
+        pay = utils.post_payment_from_form(test)
+        self.assertIsInstance(pay, dict)
+    def test_payment_from_form_false(self):
+        
+        
+        pay = utils.post_payment_from_form(test)
         self.assertIsInstance(pay, dict)
         #print(mappings.valid(utils.post_payment_from_form(subm), "orness/file/payment_validator_schema.json"))
 

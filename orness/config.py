@@ -1,4 +1,3 @@
-from email import header
 import os
 import logging
 import pprint
@@ -7,7 +6,6 @@ from ibanfirst_client.rest import ApiException
 from dotenv import load_dotenv
 from ibanfirst_client import Configuration as Conf
 from orness.header_generator import IBanFirst
-from orness import utils
 import redis
 
 rd = redis.Redis(host='localhost', port=6379, db=0)
@@ -36,7 +34,8 @@ class Config(Conf):
         super().__init__()
         #self.host = self.config['DEFAULT']['host']
         self.host = os.getenv('IB_HOST')
-        logger.info("Connected on: {} as {}".format(self.host, os.getenv('IB_USERNAME')))
+        print(self.host)
+        logger.debug("Connected on: {} as {}".format(self.host, os.getenv('IB_USERNAME')))
               
     def get_header(self):
         """

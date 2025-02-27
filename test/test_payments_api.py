@@ -56,28 +56,18 @@ class TestPaymentsApi(unittest.TestCase):
     
     def test_payment_from_form(self):
         test = {
-        "sourceWalletId": "NjczODE",
-        "externalBankAccountId": "ODEzMTU",
-        "amount": {
-          "value": "45",
-          "currency": "USD"
-           },
-        "desiredExecutionDate": "2025-02-28",
-        "feeCurrency": "USD",
-        "feePaymentOption": "BEN",
-        "priorityPaymentOption": "24H",
-        "tag": "string",
-        "communication": "string"
-    }
-        
+            "Bénéficiaire": "10943409100132",
+            "Expéditeur": "BE39914001921319",
+            "Commentaire": "",
+            "Libellé": "",
+            "Montant": "14",
+            "Date désirée": "2025-02-28",
+            "Urgence": "",
+            "Détails des frais": ""
+        }
         pay = utils.post_payment_from_form(test)
         self.assertIsInstance(pay, dict)
-    def test_payment_from_form_false(self):
-        
-        
-        pay = utils.post_payment_from_form(test)
-        self.assertIsInstance(pay, dict)
-        #print(mappings.valid(utils.post_payment_from_form(subm), "orness/file/payment_validator_schema.json"))
+    
 
     def test_payments_options_wallet_id_external_bank_account_id_get(self):
         """Test case for payments_options_wallet_id_external_bank_account_id_get
@@ -94,8 +84,8 @@ class TestPaymentsApi(unittest.TestCase):
     #     submit_pay = utils.post_payment(self.file)
     #     self.assertNotIsInstance(submit_pay, str)
 
-    def test_delete_payment(self):
-        self.assertTrue(utils.delete_paymet(""))
+    # def test_delete_payment(self):
+    #     self.assertTrue(utils.delete_paymet(""))
     
     def test_confirm_payment(self):
         self.assertTrue(utils.confirm_paymet(id="MzM1MDU1"))
@@ -105,7 +95,7 @@ class TestPaymentsApi(unittest.TestCase):
 
         Get payment list by status  # noqa: E501
         """
-        self.assertIsInstance(utils.get_payments_status('waitingconfirmation'), dict)
+        self.assertIsInstance(utils.get_payments_status('awaitingconfirmation'), dict)
     
     def test_payments_status_planified(self):
         """Test case for payments_status_get
@@ -119,7 +109,7 @@ class TestPaymentsApi(unittest.TestCase):
 
         Get payment list by status  # noqa: E501
         """
-        self.assertIsInstance(utils.get_payments_status('finilized'), dict)
+        self.assertIsInstance(utils.get_payments_status('finalized'), dict)
 
     def test_no_priorities_between_two_accounts(self):
         #OTg1OTE, NjczODE

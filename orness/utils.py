@@ -84,20 +84,16 @@ def read_data_from_file(filename):
 
 def get_payment_fee_and_priority(options: list, priority: str) -> dict:
         
+     
         """
-            Takes a list of options and a priority and returns the options that match the given priority.
+        Given a list of options and a priority, return the feePaymentOption, feeValue and feeCurrency associated with the given priority.
 
-            Parameters
-            ----------
-            options : list
-                A list of dictionaries containing the payment options
-            priority : str
-                The priority to filter the options by
+        Parameters:
+            options (list): list of options
+            priority (str): priority to look for
 
-            Returns
-            -------
-            list
-                A list of dictionaries containing the payment options that match the given priority
+        Returns:
+            dict: a dictionary containing the feePaymentOption, feeValue and feeCurrency associated with the given priority
         """
         frame = inspect.currentframe()
         func = frame.f_code.co_name
@@ -164,6 +160,25 @@ def payload(excel_data_filename:str):
     return payload_returned
 def payload_dict(data:dict):
     
+    """
+    Take a dict data as parameter and return a dict that will be used to create a payment operation
+    
+    data should contain the following keys:
+        - externalBankAccountId: str
+        - sourceWalletId: str
+        - amount: dict
+            - value: str
+            - currency: str
+        - desiredExecutionDate: str
+        - feeCurrency: str
+        - feePaymentOption: str
+        - priorityPaymentOption: str
+        - tag: str
+        - communication: str
+        
+    if the account of sourceWalletId does not have enough funds, raise a NoFund exception
+    if the priorityPaymentOption is not found in the options, raise a PriorityError exception
+    """
     payment_submit = mappings.mapping_payment_submit(data)
     if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
             logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
@@ -180,12 +195,6 @@ def payload_dict(data:dict):
     else:
         payment_submit["feePaymentOption"] = properties['feePaymentOption']
         return payment_submit
-    
-    
-    
-    
-
-
 
 def walletload(excel_data_filename: str) -> list:
     return [
@@ -234,40 +243,19 @@ def post_payment(excel_data_filename: str) -> list:
     
 def post_payment_from_form(form_data: dict):
     
+    """
+    Post a payment from form data.
 
+    Args:
+        form_data (dict): the form data to submit the payment
+
+    Returns:
+        dict: the response from the API
+    """
     payment_submit = payload_dict(form_data)
-#     test = {
-#   "sourceWalletId": "NjczODE",
-#   "externalBankAccountId": "Nzk0MDk",
-#   "amount": {
-#     "value": "2",
-#     "currency": "USD"
-#   },
-#   "desiredExecutionDate": "2025-03-01",
-#   "feeCurrency": "USD",
-#   "feePaymentOption": "BEN",
-#   "priorityPaymentOption": "48H",
-#   "tag": "",
-#   "communication": ""
-# }
-    test = {
-        'sourceWalletId': 'NjczODE',
-        'externalBankAccountId': 'ODEzMTU',
-        'amount': {
-          'value': '45',
-          'currency': 'EUR'
-           },
-        'desiredExecutionDate': '2025-02-28',
-        'feeCurrency': 'USD',
-        'feePaymentOption': 'BEN',
-        'priorityPaymentOption': '24H',
-        'tag': 'string',
-        'communication': 'string'
-    }
-    print(payment_submit)
 
-    print(mappings.valid(json_data_to_check=payment_submit, json_schema_file_dir="orness/file/submit_payment_schema.json"))
-    return transfert(payment_to_submit=payment_submit)
+    if mappings.valid(json_data_to_check=payment_submit, json_schema_file_dir="orness/file/submit_payment_schema.json"):
+        return transfert(payment_to_submit=payment_submit)
 
    
 
@@ -282,39 +270,12 @@ def transfert(payment_to_submit:dict):
     
     If there is an error, the function will log the error and return
     an appropriate error code.
-    example: result = {
-    'payment': {
-        'id': 'MzM1NDI2',
-        'status': 'awaitingconfirmation',
-        'createdDate': '2025-02-27 10:12:57',
-        'desiredExecutionDate': '2025-02-28',
-        'executionDate': None,
-        'amount': {
-            'value': '14.00',
-            'currency': 'EUR'
-            },
-        'tag': 'jjj',
-        'externalBankAccountId': 'ODEzMTU',
-        'sourceWalletId': 'NjczODE',
-        'sourceWalletNumber': None,
-        'communication': 'OPOO ',
-        'priorityPaymentOption': 'normal',
-        'feePaymentOption': 'BEN',
-        'feePaymentAmount': {
-            'value': '0.00',
-            'currency': None
-            }
-        }
-    }
+    
     """
     try:
-          
-        
         api = IbPaymentsApi()
         post_payment_response = api.payments_post(payment=payment_to_submit).json()
         return post_payment_response
-    
-    
     except ApiException as e:
         logger.error(f"Error  [postfromform]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
         return e.status

@@ -1,10 +1,16 @@
 # coding: utf8
-from orness import utils
 import json
 import redis
 
 class RedisCache:
     def __init__(self, host='localhost', port=6379, db=0):
+        """
+        Constructeur de la classe RedisCache.
+
+        :param str host: Nom de domaine ou IP du serveur Redis
+        :param int port: Port TCP du serveur Redis
+        :param int db: Numéro de base de données Redis
+        """
         self.r = redis.Redis(host=host, port=port, db=db)
         
 

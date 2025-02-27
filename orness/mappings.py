@@ -192,7 +192,7 @@ def mapping_ben_creation(data:dict):
     ben["holderBank"]["address"] = {}
     ben["holder"]["address"] = {}
 
-    ben["currency"]             = data["currency"]          if data["currency"]          else ""  
+    ben["currency"]             = data["currency"]          if data["currency"]          else "EUR"  
     ben["accountNumber"]        = data["accountNumber"]     if data["accountNumber"]     else ""
     ben["tag"]                  = data["tag"]               if data["tag"]               else ""
     ben["correspondentBankBic"] = data["correspondentBankBic"] if data["correspondentBankBic"] else ""

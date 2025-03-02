@@ -2,6 +2,7 @@ import json
 import re
 from flask  import Flask, render_template, request, flash, redirect, url_for
 import os
+
 from orness import utils
 from werkzeug.utils import secure_filename
 import logging
@@ -10,6 +11,7 @@ rd = redis.Redis(host='localhost', port=6379, db=0)
 
 extern = json.loads(rd.get('external_bank_accounts_info'))
 pay_history = list(reversed(json.loads(rd.get('payments_histo'))))
+pay_planified = list(reversed(json.loads(rd.get('payments_planified'))))
 
 wallets = json.loads(rd.get('wallets_info'))
 
@@ -54,33 +56,40 @@ def submit_payment():
     data = {}
     len_extern = 0
     list_exteriban = ""
+    if request.method == "POST" and "file" in request.files:
+        file = request.files["file"]
+        if file.filename == "":
+            
+            return redirect(request.url)
+        if file:
+            filename = secure_filename(file.filename)
+            payment = utils.post_payment(filename)
+            app.logger.debug(f'the payload : {payment}:   ')
+            return render_template('submit_payment.html', extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified)
+    
     if request.method == "POST" and "add_recipient" in request.form:
         recipient = request.form.get("recipient")
         list_exteriban = utils.get_external_iban_with_same_name(name=recipient)
         app.logger.debug(list_exteriban)
     
-    # for wal in wallets:
-    #     if  wal['holderIBAN'] in request.form:
-    #         app.logger.debug(f"IBAN: {wal['holderIBAN']}")
-   
-
-        
-        return render_template('submit_payment.html', data=data, extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets)
+        return render_template('submit_payment.html', data=data, extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified)
+    
+    
     if request.method == "POST":
         urgency = request.form.get("urgency")
-        data['Priorité'] = ""
+        data['Urgence'] = ""
         if urgency == "Urgent":
-            data['Priorité'] = "1H"
+            data['Urgence'] = "1H"
         if urgency == "Normal":
-            data['Priorité'] = "24H"
+            data['Urgence'] = "24H"
         if urgency == "Différé":
-            data['Priorité'] = "48H"
+            data['Urgence'] = "48H"
         
         
         
         data['Bénéficiaire']= request.form.get('ext_iban')
 
-        
+        data["Détails des frais"] = request.form.get('who_pay_fees')
         data['Commentaire'] = request.form.get("comment")
         data['Libellé']= request.form.get("tag")
         data['Montant']= request.form.get("amount")
@@ -107,24 +116,10 @@ def submit_payment():
         app.logger.debug(f'{result}:   ')
         
         
-        return render_template("submit_payment.html", data=data, result=result, extern=extern, list_extern = list_exteriban, typo=typo, history=pay_history, wallets_list=wallets)
-
-    
-    if request.method == "POST" and request.files:
-        file = request.files["file"]
-        if file.filename == "":
-            flash("No file selected")
-            return redirect(request.url)
-        if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            flash("File uploaded successfully")
-            payload = utils.payload(file)
-            app.logger.debug(f'the payload : {payload}:   ')
-        
+        return render_template("submit_payment.html", data=data, result=result, extern=extern, list_extern = list_exteriban, typo=typo, history=pay_history, wallets_list=wallets, plan=pay_planified)
 
    
-    return render_template('submit_payment.html', extern=extern, history=pay_history, len_extern=len_extern, wallets_list=wallets)
+    return render_template('submit_payment.html', extern=extern, history=pay_history, len_extern=len_extern, wallets_list=wallets, plan=pay_planified)
 
 @app.route("/create_exteral_bank_account", methods=["GET", "POST"])
 def create_account():

@@ -9,7 +9,13 @@
 </head>
     <body>
         
-        
+        <div style="margin-bottom: 7px; margin-left: 350px;margin-right: 250px; ">
+            <form method="POST" id="upload" enctype="multipart/form-data">
+            <label for="pay_file">Inserez un tableau excel :</label> <br>
+            <input type="file" name="file" id="pay_file"> </input>
+            <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Charger</button>
+            </form>
+        </div>
         <div  id="wallet_list" class="container">   
             
             <form method="POST">
@@ -79,22 +85,25 @@
                 <option value="Normal">Normal</option>
                 <option value="Différé">Différé</option>
             </select><br><br>
+            <label for="fees">Transaction à la charge de</label>
+            <select id="who_pay_fees" name="who_pay_fees">
+                <option value="OUR">Nous</option>
+                <option value="SHARE">Partagé</option>
+                <option value="BEN">Bénéficiaire</option>
+            </select>
             
             <label for="comment">Commentaire :</label><br>
             <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br><br>
 
             <div class="container-child">
-                <label for="pay_file">Inserez un tableau excel :</label>
-                <input type="file" name="file" id="pay_file">  
-        
-                <input type="submit" value="Envoyer">
+                  
+                <button style="width: 250px; height: 25px; background-color: rgb(6, 197, 6);" type="submit" >Envoyer</button>
             </div>
             
 
         
             </form>
-        
-        
+      
             <div id="result">
                 
                 
@@ -150,12 +159,30 @@
                     </tr>
                     {% endfor %}
                     {% endif %}
+                    {% if plan %}
+                       {% for  planif in plan %}
+                    <tr>
+                        <td>{{ planif['id'] }}</td>
+                        <td>{{ planif['sourceWalletId'] }}</td>
+                        <td>{{ planif['externalBankAccountId'] }}</td>
+                        <td>{{ planif['amount']['value'] }}  {{ planif['amount']['currency'] }}</td>
+                        <td>{{ planif['rate']['appliedBid'] }}  {{ planif['rate']['currencyPair'] }}</td>
+                        <td>{{ planif['createdDate'] }}</td>
+                        <td>{{ planif['communication'] }}</td>
+                        <td>{{ planif['counterValue']['value'] }}  {{ planif['counterValue']['currency'] }}</td>
+                        <td>{{ planif['status'] }}</td>
+                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#9989;" name="validate_pay"></td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    </tbody>
                     </thead>
                 </table>
                 </div>
             
             </div>
         </div>
+        
         
 
     </body>

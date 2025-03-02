@@ -19,7 +19,7 @@ sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
 sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
 sed -i 's/swagger_client/ibanfirst_client/g' test/*.py
 sed -i 's/swagger-client/Orness_client/g' setup.py
-echo -e 'redis\npython-dotenv\njsonschema\npandas == 2.2.3\nopenpyxl\ncountry-converter\nconfigparser\npyyaml' >> requirements.txt
+echo -e 'redis\npython-dotenv\njsonschema\npandas == 2.2.3\nopenpyxl\ncountry-converter\nconfigparser\npyyaml\nflask' >> requirements.txt
 touch .env 
 echo -e "IB_USERNAME= \nIB_PASSWORD= \nIB_HOST= \nLOG_FILE= \nSETTINGS_FILE=" > .env
 echo "install required modules"

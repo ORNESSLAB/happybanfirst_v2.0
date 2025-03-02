@@ -82,7 +82,7 @@ def read_data_from_file(filename):
     
     return myjson
 
-def get_payment_fee_and_priority(options: list, priority: str) -> dict:
+def get_payment_fee_and_priority(options: list, priority: str, who_pays:str = "OUR") -> dict:
         
      
         """
@@ -101,10 +101,10 @@ def get_payment_fee_and_priority(options: list, priority: str) -> dict:
             
             if not options:
                 logger.error(f"No priorities found between the two accounts")
-                raise errorExceptions.NoPriorityError("No priorities found")
-            if [option for option in options if option["priorityPaymentOption"] == priority.upper()] == []:
+                raise errorExceptions.NoPriorityError("No links between both accounts found")
+            if [option for option in options if option["priorityPaymentOption"] == priority.upper() and option['feePaymentOption'] == who_pays] == []:
                 
-                logger.error(f"Priority {priority} not found in options: {options}")
+                logger.error(f"Priority {priority} and fee payer {who_pays} not found in options: {options}")
                 raise errorExceptions.PriorityError("Priority not found")
                 
             else:
@@ -150,13 +150,11 @@ def payload(excel_data_filename:str):
         logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
         properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
         
-        if properties == errorExceptions.ERROR_PRIORITY:
+        if properties == errorExceptions.ERROR_PRIORITY or properties == errorExceptions.ERROR_NO_PRIORITY or properties == errorExceptions.ERROR_FUNDS:
             continue
-        elif not properties:
-            continue
-        else:
-            payment_submit["feePaymentOption"] = properties['feePaymentOption']
-            payload_returned.append(payment_submit)
+        
+        payment_submit["feePaymentOption"] = properties['feePaymentOption']
+        payload_returned.append(payment_submit)
     return payload_returned
 def payload_dict(data:dict):
     
@@ -190,11 +188,12 @@ def payload_dict(data:dict):
     properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
     if properties == errorExceptions.ERROR_PRIORITY:
         return errorExceptions.ERROR_PRIORITY
-    elif properties == errorExceptions.ERROR_NO_PRIORITY:
+    if properties == errorExceptions.ERROR_NO_PRIORITY:
         return errorExceptions.ERROR_NO_PRIORITY
-    else:
-        payment_submit["feePaymentOption"] = properties['feePaymentOption']
-        return payment_submit
+    
+    
+    payment_submit["feePaymentOption"] = properties['feePaymentOption']
+    return payment_submit
 
 def walletload(excel_data_filename: str) -> list:
     return [
@@ -495,11 +494,12 @@ def create_beneficiary(data:dict):
 rd.set('external_bank_accounts_info', json.dumps(get_external_bank_account_info()))
 rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
 rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
+rd.set('payments_planified', json.dumps(get_payments_status('planified')['payments']))
 
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
     #print(get_wallets())
-    print(post_payment(file_a))
+    #print(post_payment(file_a))
     #print(get_wallet_holder_info())
     #print(list_wallets_from_file(file_a))
     #retreive_option_list(wallet_id="", external_id="Njc1NzI")
@@ -547,7 +547,7 @@ if __name__ == '__main__':
     }
 }
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    #print(post_payment_from_form(kg))
+    print(post_payment_from_form(kg))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))

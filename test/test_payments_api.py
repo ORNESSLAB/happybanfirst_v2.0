@@ -54,7 +54,7 @@ class TestPaymentsApi(unittest.TestCase):
              'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}]
     
     
-    def test_payment_from_form(self):
+    def test_payment_from_form_past_date(self):
         test = {
             "Bénéficiaire": "10943409100132",
             "Expéditeur": "BE39914001921319",
@@ -63,7 +63,21 @@ class TestPaymentsApi(unittest.TestCase):
             "Montant": "14",
             "Date désirée": "2025-02-28",
             "Urgence": "",
-            "Détails des frais": ""
+            "Détails des frais": "OUR"
+        }
+        pay = utils.post_payment_from_form(test)
+        self.assertIsInstance(pay, dict)
+    
+    def test_payment_from_form(self):
+        test = {
+            "Bénéficiaire": "10943409100132",
+            "Expéditeur": "BE39914001921319",
+            "Commentaire": "",
+            "Libellé": "",
+            "Montant": "14",
+            "Date désirée": "2025-03-28",
+            "Urgence": "",
+            "Détails des frais": "OUR"
         }
         pay = utils.post_payment_from_form(test)
         self.assertIsInstance(pay, dict)

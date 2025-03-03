@@ -5,7 +5,8 @@ import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import country_converter as coco
-from datetime import datetime   
+from datetime import datetime  
+import pandas as pd 
 import redis
 
 rd = redis.Redis(host='localhost', port=6379, db=0)
@@ -162,8 +163,9 @@ def mapping_payment_submit(data:dict) -> dict:
     external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Bénéficiaire'])
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
+    date_execution = pd.to_datetime(data['Date d’exécution']).strftime('%Y-%m-%d')
     payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
-    payment_submit['desiredExecutionDate'] = data['Date désirée'] if data['Date désirée'] and datetime.strptime(data['Date désirée'], "%Y-%m-%d").date() else datetime.today().strftime('%Y-%m-%d') #data['date']
+    payment_submit['desiredExecutionDate'] = date_execution if datetime.strptime(date_execution, '%Y-%m-%d') >= datetime.now() else datetime.now().strftime('%Y-%m-%d')   
     payment_submit['priorityPaymentOption'] = data['Urgence'] if data['Urgence'] else '24H' #data['priorite']
     payment_submit['feeCurrency'] = 'EUR'
     payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
@@ -217,6 +219,42 @@ def mapping_ben_creation(data:dict):
 
     return  ben
 
-if __name__ == '__main__':
-   print(rd.get('wallets_info'))
-    
+
+
+def mapping_payment_submit_v2(data:dict) -> dict:
+    payment_submit = {}
+    #TODO: check the amount currency
+    #TODO: check wallet holder name
+    #TODO: check beneficiary holder name
+    try:
+        
+        if data['Unnamed: 1']:
+            source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info')) if k['holderName'] == data['Expéditeur'] and k['holderIBAN'] == data['Unnamed: 1'])
+        else:
+            source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info')) if k['holderIBAN'] == data['Unnamed: 1'])
+        if data['Unnamed: 3']:
+            external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderName'] == data['Bénéficiaire'] and k['holderIBAN'] == data['Unnamed: 3'])
+            amount_currency = "".join(k['currency'] for k in json.loads(rd.get('external_bank_accounts_info'))if k['holderName'] == data['Bénéficiaire'] and k['holderIBAN'] == data['Unnamed: 3'])
+        else:
+            external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Unnamed: 3'])
+            amount_currency = "".join(k['currency'] for k in json.loads(rd.get('external_bank_accounts_info'))if k['holderIBAN'] == data['Unnamed: 3'])
+        
+        
+
+        payment_submit['externalBankAccountId'] = external_Id
+        payment_submit['sourceWalletId'] = source_Id
+        date_execution = pd.to_datetime(data['Date d’exécution']).strftime('%Y-%m-%d')
+        payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
+        payment_submit['desiredExecutionDate'] = date_execution if datetime.strptime(date_execution, '%Y-%m-%d') >= datetime.now() else datetime.now().strftime('%Y-%m-%d')   
+        payment_submit['priorityPaymentOption'] = data['Urgence'] if data['Urgence'] else '24H' #data['priorite']
+        payment_submit['feeCurrency'] = 'EUR'
+        payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
+        payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
+
+        return payment_submit
+    except ValueError as er:
+        raise ValueError(f"Error: {er}")
+    except KeyError as er:
+        raise KeyError(f"Error: {er}")
+
+

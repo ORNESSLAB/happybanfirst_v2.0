@@ -76,8 +76,9 @@ def read_data_from_file(filename):
     Returns:
         dict: the content of the excel file in json format
     """
-    exc = pd.read_excel(filename)
-    exc['Date désirée'] = pd.to_datetime(exc['Date désirée'], unit='d').dt.strftime('%Y-%m-%d')
+    exc = pd.read_excel(filename).dropna(how='all')
+    
+    #exc['Date désirée'] = pd.to_datetime(exc['Date désirée'], unit='d').dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
     
     return myjson
@@ -134,7 +135,7 @@ def payload(excel_data_filename:str):
     
     json_data_from_excel = read_data_from_file(excel_data_filename)
     for data in json_data_from_excel:
-        payment_submit = mappings.mapping_payment_submit(data)
+        payment_submit = mappings.mapping_payment_submit_v2(data)
         if not payment_submit['externalBankAccountId']:
             logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
             continue
@@ -498,6 +499,9 @@ rd.set('payments_planified', json.dumps(get_payments_status('planified')['paymen
 
 if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
+    file_b = 'new_payments_v2.xlsx'
+
+    print(read_data_from_file(file_b))
     #print(get_wallets())
     #print(post_payment(file_a))
     #print(get_wallet_holder_info())
@@ -510,8 +514,8 @@ if __name__ == '__main__':
         "Commentaire": "",
         "Libellé": "",
         "Montant": "14",
-        "Date désirée": "2025-02-28",
-        "Urgence": "",
+        "Date désirée": "2025-03-18",
+        "Urgence": "48H",
         "Détails des frais": ""
     }
 
@@ -547,7 +551,7 @@ if __name__ == '__main__':
     }
 }
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    print(post_payment_from_form(kg))
+    #print(post_payment_from_form(kg))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))

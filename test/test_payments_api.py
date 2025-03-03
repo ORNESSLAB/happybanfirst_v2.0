@@ -70,7 +70,7 @@ class TestPaymentsApi(unittest.TestCase):
     
     def test_payment_from_form(self):
         test = {
-            "Bénéficiaire": "10943409100132",
+            "Bénéficiaire": "RS35160005010008573607",
             "Expéditeur": "BE39914001921319",
             "Commentaire": "",
             "Libellé": "",
@@ -98,11 +98,12 @@ class TestPaymentsApi(unittest.TestCase):
     #     submit_pay = utils.post_payment(self.file)
     #     self.assertNotIsInstance(submit_pay, str)
 
-    # def test_delete_payment(self):
-    #     self.assertTrue(utils.delete_paymet(""))
+    def test_delete_payment(self):
+        self.assertTrue(utils.delete_paymet("MzM1MDA1"))
     
     def test_confirm_payment(self):
         self.assertTrue(utils.confirm_paymet(id="MzM1MDU1"))
+
 
     def test_payments_status_wait(self):
         """Test case for payments_status_get
@@ -131,6 +132,7 @@ class TestPaymentsApi(unittest.TestCase):
         self.assertIsNotNone(utils.retreive_option_list(wallet_id='NjczODE', external_id='NzA2MTA'))
     
     def test_get_payment_fee_and_priority(self):
+        
         self.assertTrue(utils.get_payment_fee_and_priority(options=self.opt, priority='24H'))
 
 

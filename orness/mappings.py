@@ -6,10 +6,132 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 import country_converter as coco
 from datetime import datetime  
+import logging
 import pandas as pd 
 import redis
+from orness import error_exception
 
+logger = logging.getLogger(__name__)
 rd = redis.Redis(host='localhost', port=6379, db=0)
+wallets = json.loads(rd.get('wallets_info'))
+beneficiary = json.loads(rd.get('external_bank_accounts_info'))
+print (f"les wallets redis: {wallets}")
+
+def max_value(wallets):
+    return max([float(i["amountValue"]) for i in wallets])
+    
+   
+def number_of_same_object_holder_name(holder_name:str, objet) -> int:
+   
+    """
+    The number of object accounts with the same holder name
+
+    Parameters
+    ----------
+    holder_name : str
+        The holder name
+    object : str, optional
+        The object to search in, by default 'external_bank_accounts_info'
+
+    Returns
+    -------
+    int
+        The number of external bank accounts or wallet with the same holder name
+    """
+   
+
+    try:
+        
+        return len([i for i in json.loads(rd.get(objet)) if i['holderName'] == holder_name])
+        
+    except Exception as e:
+        logger.error(e)
+        return 0
+
+def get_object_with_same_name(name:str, objet='external_bank_accounts_info'):
+    """_summary_
+
+    Args:
+        name (str): _description_
+        objet (str, required): _description_. choice: 'external_bank_accounts_info' 'wallets_info'.
+
+    Returns:
+        _type_: _description_
+    """
+    return [i['holderIBAN'] for i in json.loads(rd.get(objet)) if i['holderName'] == name ]
+
+
+
+def check_if_beneficiary_name(holderName:str):
+    return any(i['holderName'] == holderName  for i in rd.get('external_bank_accounts_info') )
+
+
+def choose_the_wallet(data, ben_currency):
+    error = 0
+    source_Id=[]
+    if (data['Expéditeur'] and not data['Unnamed: 1']): 
+        if number_of_same_object_holder_name(data['Expéditeur'], objet="wallets_info") > 1:
+            #si le nom du compte expéditeur est reseigner sans l'IBAN, le compte qui sera choisir sera celui avec soit la même devise que celui du bénéficiaire ou celui avec plus de fonds
+            source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if k['holderName'] == data['Expéditeur'] and k['amountCurrency'] == ben_currency and float(k['amountValue']) > float(data['Montant'])]
+            if not source_Id:
+                error = 1
+                source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if k['holderName'] == data['Expéditeur'] and float(k['amountValue']) == max_value(wallets)]
+            
+        
+    elif data['Expéditeur'] and  data['Unnamed: 1']:
+
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data['Unnamed: 1'] and k['holderName'] == data['Expéditeur']]
+        if not source_Id:
+            error = 1
+        elif float(source_Id[0][2]) > float(data['Montant']):
+            source_Id = source_Id
+        else:
+            error = 2
+            source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if k['holderName'] == data['Expéditeur'] and float(k['amountValue']) == max_value(wallets)]
+            
+    elif not data['Expéditeur'] and not data['Unnamed: 1']:
+        source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if k['amountCurrency'] == ben_currency and float(k['amountValue']) > float(data['Montant'])]
+        if not source_Id:
+            source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if float(k['amountValue']) == max_value(wallets)]
+        
+    else:
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data['Unnamed: 1']]
+        if not source_Id:
+            error = 3
+        elif float(source_Id[0][2]) > float(data['Montant']):
+            source_Id = source_Id
+        else:
+            error = 4
+            source_Id = [(k['id'], k['amountCurrency']) for k in wallets  if float(k['amountValue']) == max_value(wallets)]
+        
+            
+    return source_Id, error
+
+def choose_beneficiary(data):
+    if not data['Unnamed: 3'] and data['Bénéficiaire']: 
+        if number_of_same_object_holder_name(data['Bénéficiaire'], objet="external_bank_accounts_info") > 1:
+            return error_exception.TOO_MUCH_BENEFICIARY_IBAN
+        else:
+            benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderName'] == data['Bénéficiaire']]
+        
+    elif data['Unnamed: 3'] and data['Bénéficiaire']:
+        benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderName'] == data['Bénéficiaire'] and k['holderIBAN'] == data['Unnamed: 3']]
+        print(f"ben_ tous IBAN et Name: {benef} IBAN:{data['Unnamed: 3']}BEN:{data['Bénéficiaire']}OK")
+        if not benef:
+            return error_exception.NO_BENEFICIARY_FOUND
+    else:
+        benef = [(k['id'], k['currency']) for k in beneficiary  if  k['holderIBAN'] == data['Unnamed: 3']]
+        if len(benef) > 1:
+            return error_exception.TOO_MUCH_BENEFICIARY_IBAN
+        if not benef:
+            print(f"ben_ juste_IBAN: {benef}")
+            return error_exception.NO_BENEFICIARY_FOUND
+        
+        else:
+            benef = benef
+    return benef
+    
+
 
 def valid(json_data_to_check: dict, json_schema_file_dir: str) -> bool:
     try:
@@ -158,16 +280,20 @@ def mapping_payment_submit(data:dict) -> dict:
         "tag": "string",
         "communication": "string"
     }
-    source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info'))if k['holderIBAN'] == data['Expéditeur'])
-    amount_currency = "".join(k['currency'] for k in json.loads(rd.get('external_bank_accounts_info'))if k['holderIBAN'] == data['Bénéficiaire'])
-    external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Bénéficiaire'])
+    source_Id = "".join(k['id'] for k in wallets if k['holderIBAN'] == data['Expéditeur'])
+    fee_currency = "".join(k['amountCurrency'] for k in wallets  if k['holderName'] == data['Expéditeur'])
+        
+    amount_currency = "".join(k['currency'] for k in beneficiary if k['holderIBAN'] == data['Bénéficiaire'])
+    external_Id = "".join(k['id'] for k in beneficiary  if k['holderIBAN'] == data['Bénéficiaire'])
+
     payment_submit['externalBankAccountId'] = external_Id
     payment_submit['sourceWalletId'] = source_Id
-    date_execution = pd.to_datetime(data['Date d’exécution']).strftime('%Y-%m-%d')
+    #date_execution = pd.to_datetime(data['Date d’exécution']).strftime('%Y-%m-%d')
     payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
-    payment_submit['desiredExecutionDate'] = date_execution if datetime.strptime(date_execution, '%Y-%m-%d') >= datetime.now() else datetime.now().strftime('%Y-%m-%d')   
+    payment_submit['desiredExecutionDate'] = date_format(date=data['Date d’exécution'])  
     payment_submit['priorityPaymentOption'] = data['Urgence'] if data['Urgence'] else '24H' #data['priorite']
-    payment_submit['feeCurrency'] = 'EUR'
+    payment_submit['feeCurrency'] = fee_currency
+    payment_submit['feePaymentOption'] = data['Détails des frais'] if data['Détails des frais'] else ''
     payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
     payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
     return payment_submit
@@ -221,40 +347,99 @@ def mapping_ben_creation(data:dict):
 
 
 
+def date_format(date):
+    # Check if date is empty
+    if not date:
+        return datetime.now().strftime('%Y-%m-%d')
+    
+    # If the date is a string, try to convert it to a datetime object
+    if isinstance(date, str):
+        try:
+            # Parse the string to a datetime object
+            input_date = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            # Handle invalid string date format
+            logger.error("Invalid date format. Please use YYYY-MM-DD.")
+            return ""
+    
+    # If the date is already a datetime object (e.g., from pandas Excel import)
+    elif isinstance(date, pd.Timestamp) or isinstance(date, datetime):
+        input_date = date
+    else:
+        return "Invalid input date type."
+
+    # Compare the input date with the current date
+    if input_date > datetime.now():
+        return input_date.strftime('%Y-%m-%d')  # Return future date as is
+    else:
+        return datetime.now().strftime('%Y-%m-%d')  # Return today's date
+
+
+# def date_format(date: str):
+#     if date == "":
+#         return datetime.now().strftime('%Y-%m-%d')
+
+#     try:
+#         # Parse the date string into a datetime object
+#         input_date = datetime.strptime(date, "%Y-%m-%d")
+
+#         # Compare the input date with the current date
+#         if input_date > datetime.now():
+#             return input_date.strftime('%Y-%m-%d')
+#         else:
+#             return datetime.now().strftime('%Y-%m-%d')
+
+#     except ValueError:
+#         # Handle invalid date format gracefully
+#         return "Invalid date format. Please use YYYY-MM-DD."
+    
+
 def mapping_payment_submit_v2(data:dict) -> dict:
     payment_submit = {}
     #TODO: check the amount currency
     #TODO: check wallet holder name
     #TODO: check beneficiary holder name
+    #TODO: return error value
+    
     try:
-        
-        if data['Unnamed: 1']:
-            source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info')) if k['holderName'] == data['Expéditeur'] and k['holderIBAN'] == data['Unnamed: 1'])
-        else:
-            source_Id = "".join(k['id'] for k in json.loads(rd.get('wallets_info')) if k['holderIBAN'] == data['Unnamed: 1'])
-        if data['Unnamed: 3']:
-            external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderName'] == data['Bénéficiaire'] and k['holderIBAN'] == data['Unnamed: 3'])
-            amount_currency = "".join(k['currency'] for k in json.loads(rd.get('external_bank_accounts_info'))if k['holderName'] == data['Bénéficiaire'] and k['holderIBAN'] == data['Unnamed: 3'])
-        else:
-            external_Id = "".join(k['id'] for k in json.loads(rd.get('external_bank_accounts_info')) if k['holderIBAN'] == data['Unnamed: 3'])
-            amount_currency = "".join(k['currency'] for k in json.loads(rd.get('external_bank_accounts_info'))if k['holderIBAN'] == data['Unnamed: 3'])
+        external_Id = choose_beneficiary(data)
+        source_Id, error = choose_the_wallet(data=data, ben_currency=external_Id[0][1])
         
         
-
-        payment_submit['externalBankAccountId'] = external_Id
-        payment_submit['sourceWalletId'] = source_Id
-        date_execution = pd.to_datetime(data['Date d’exécution']).strftime('%Y-%m-%d')
-        payment_submit['amount'] = {'value':data['Montant'], 'currency': amount_currency}
-        payment_submit['desiredExecutionDate'] = date_execution if datetime.strptime(date_execution, '%Y-%m-%d') >= datetime.now() else datetime.now().strftime('%Y-%m-%d')   
+        
+            
+        
+        payment_submit['externalBankAccountId'] = external_Id[0][0]
+        payment_submit['sourceWalletId'] = source_Id[0][0]
+        date_execution = date_format(date=data['Date d’exécution'])
+        payment_submit['amount'] = {'value':data['Montant'], 'currency': external_Id[0][1]}
+        payment_submit['desiredExecutionDate'] = date_execution 
         payment_submit['priorityPaymentOption'] = data['Urgence'] if data['Urgence'] else '24H' #data['priorite']
-        payment_submit['feeCurrency'] = 'EUR'
+        payment_submit['feeCurrency'] = source_Id[0][1]
+        if data['Détails des frais']:
+            if data['Détails des frais'].upper() == "CLIENT":
+                payment_submit['feePaymentOption'] = 'OUR'
+            if data['Détails des frais'].upper() == "Bénéficiaire".upper():
+                payment_submit['feePaymentOption'] = 'BEN'
+            if data['Détails des frais'].upper() == "Partagé".upper():
+                payment_submit['feePaymentOption'] = 'SHARE'
+        else:
+            payment_submit['feePaymentOption'] = "OUR"
         payment_submit['tag'] = data['Libellé'] if data['Libellé'] else ''
         payment_submit['communication'] = data['Commentaire'] if data['Commentaire'] else ''
-
         return payment_submit
-    except ValueError as er:
-        raise ValueError(f"Error: {er}")
-    except KeyError as er:
-        raise KeyError(f"Error: {er}")
+    except TypeError as err:
+        logger.error(f"erreur [Mapping]: {err}")
+        raise ("Erreur [Mapping]")
+    
 
+if __name__ == '__main__':
+    data = {'Expéditeur': '', 'Unnamed: 1': '', 'Bénéficiaire': '87ac164a37e96db', 'Unnamed: 3': '', 'Montant': 600.0, 'Date d’exécution': "2025-03-24", 'Détails des frais': 'client', 'Urgence': None, 'Libellé': None, 'Commentaire': None}
+    #     {'Expéditeur': 'TEST API ORNESS', 'Unnamed: 1': 'BE17914001921521', 'Bénéficiaire': 'b44126a0e90b4d4', 'Unnamed: 3': 'RS35160005010008573607', 'Montant': 25.0, 'Date d’exécution': "2025-03-15", 'Détails des frais': 'bénéficiaire', 'Urgence': None, 'Libellé': None, 'Commentaire': None},
+    #data = {'Expéditeur': 'TEST API ORNESS', 'Unnamed: 1': 'BE39914001921319', 'Bénéficiaire': '87ac164a37e96db', 'Unnamed: 3': '44717721356', 'Montant': 9.0, 'Date d’exécution': "2025-03-14", 'Détails des frais': 'partagé', 'Urgence': None, 'Libellé': None, 'Commentaire': None}
+    ben = {'id': 'ODYyMjM', 'holderName': '87ac164a37e96db', 'holderBankBic': 'SCBLHKHHXXX', 'holderIBAN': '44717721356', 'currency': 'USD'}
+    #print(choose_beneficiary(data))
+    #print([(k['id'], k['currency']) for k in beneficiary  if k['holderName'] ==  "87ac164a37e96db" and k['holderIBAN'] == "44717721356"])
+    print(date_format(""))
 
+    

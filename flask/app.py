@@ -94,7 +94,7 @@ def submit_payment():
         data['Libellé']= request.form.get("tag")
         data['Montant']= request.form.get("amount")
         data['Expéditeur'] = request.form.get("source_Id")
-        data['Date désirée']= request.form.get("date")
+        data["Date d’exécution"]= request.form.get("date")
         
         app.logger.debug(f'{data}:   ')
         result = utils.post_payment_from_form(form_data=data)

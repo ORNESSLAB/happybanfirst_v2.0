@@ -29,7 +29,7 @@ load_dotenv()
 
 
 rd = RedisCache()
-rd.clear()
+#rd.clear()
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def read_data_from_file(filename):
     """
     exc = pd.read_excel(filename).dropna(how='all')
     
-    #exc['Date désirée'] = pd.to_datetime(exc['Date désirée'], unit='d').dt.strftime('%Y-%m-%d')
+    exc['Date d’exécution'] = pd.to_datetime(exc['Date d’exécution'], errors="coerce").dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
     
     return myjson
@@ -111,6 +111,7 @@ def get_payment_fee_and_priority(options: list, priority: str, who_pays:str = "O
             else:
                 result = [option for option in options if option["priorityPaymentOption"] == priority.upper()]
                 return {
+                    
                     "feePaymentOption": result[0]["feePaymentOption"],
                     "feeValue": result[0]["feeCost"]["value"],
                     "feeCurrency": result[0]["feeCost"]['currency']
@@ -135,6 +136,8 @@ def payload(excel_data_filename:str):
     
     json_data_from_excel = read_data_from_file(excel_data_filename)
     for data in json_data_from_excel:
+        if data['Expéditeur'] == 'Titulaire':
+            continue
         payment_submit = mappings.mapping_payment_submit_v2(data)
         if not payment_submit['externalBankAccountId']:
             logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
@@ -155,6 +158,7 @@ def payload(excel_data_filename:str):
             continue
         
         payment_submit["feePaymentOption"] = properties['feePaymentOption']
+        payment_submit["feeCurrency"] = properties['feeCurrency']
         payload_returned.append(payment_submit)
     return payload_returned
 def payload_dict(data:dict):
@@ -194,6 +198,7 @@ def payload_dict(data:dict):
     
     
     payment_submit["feePaymentOption"] = properties['feePaymentOption']
+    payment_submit["feeCurrency"] = properties['feeCurrency']
     return payment_submit
 
 def walletload(excel_data_filename: str) -> list:
@@ -456,27 +461,7 @@ def check_account_value(wallet_id:str, amount:float) -> bool:
     except Exception as e:
             logger.error(e)
             return False
-def number_of_same_external_holder_name(holder_name:str) -> int:
-    """
-    Get the number of external bank accounts with the same holder name.
 
-    :param holder_name: The name of the holder
-    :return: The number of external bank accounts with the same holder name
-    """
-    try:
-        if len([i for i in rd.get('external_bank_accounts_info') if i['holderName'] == holder_name]) > 1:
-            return len([i for i in rd.get('external_bank_accounts_info') if i['holderName'] == holder_name])
-        else:
-            return 1
-    except Exception as e:
-        logger.error(e)
-        return 0
-
-def get_external_iban_with_same_name(name:str):
-    return [i['holderIBAN'] for i in rd.get('external_bank_accounts_info') if i['holderName'] == name ]
-
-def check_if_beneficiary_name(holderName:str):
-    return any(i['holderName'] == holderName  for i in rd.get('external_bank_accounts_info') )
 
 def create_beneficiary(data:dict):
     try:
@@ -501,7 +486,7 @@ if __name__ == '__main__':
     file_a = 'new_payment.xlsx'
     file_b = 'new_payments_v2.xlsx'
 
-    print(read_data_from_file(file_b))
+    #print(post_payment(file_b))
     #print(get_wallets())
     #print(post_payment(file_a))
     #print(get_wallet_holder_info())
@@ -514,7 +499,7 @@ if __name__ == '__main__':
         "Commentaire": "",
         "Libellé": "",
         "Montant": "14",
-        "Date désirée": "2025-03-18",
+        "Date d’exécution": "2025-03-18",
         "Urgence": "48H",
         "Détails des frais": ""
     }
@@ -551,7 +536,7 @@ if __name__ == '__main__':
     }
 }
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    #print(post_payment_from_form(kg))
+    print(post_payment_from_form(kg))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))

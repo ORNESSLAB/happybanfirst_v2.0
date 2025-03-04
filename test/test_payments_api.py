@@ -61,7 +61,7 @@ class TestPaymentsApi(unittest.TestCase):
             "Commentaire": "",
             "Libellé": "",
             "Montant": "14",
-            "Date désirée": "2025-02-28",
+            "Date d’exécution": "2025-02-28",
             "Urgence": "",
             "Détails des frais": "OUR"
         }
@@ -75,7 +75,7 @@ class TestPaymentsApi(unittest.TestCase):
             "Commentaire": "",
             "Libellé": "",
             "Montant": "14",
-            "Date désirée": "2025-03-28",
+            "Date d’exécution": "2025-03-28",
             "Urgence": "",
             "Détails des frais": "OUR"
         }

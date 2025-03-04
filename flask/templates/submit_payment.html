@@ -15,6 +15,23 @@
             <input type="file" name="file" id="pay_file"> </input>
             <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Charger</button>
             </form>
+            <div id="result">
+                
+                {% if result  and typo == "dict" %}
+                
+                <p>Le transfert a été effectué avec succès</p>
+                
+                {% endif %}
+                {% if result == 0 %}
+                <p>Le transfert a échoué. Fond insuffisant</p>
+                
+                {% endif %}
+                {% if result == 1 %}
+                <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
+                {% endif %}
+                
+            
+            </div>
         </div>
         <div  id="wallet_list" class="container">   
             
@@ -87,7 +104,7 @@
             </select><br><br>
             <label for="fees">Transaction à la charge de</label>
             <select id="who_pay_fees" name="who_pay_fees">
-                <option value="OUR">Nous</option>
+                <option value="OUR">Client</option>
                 <option value="SHARE">Partagé</option>
                 <option value="BEN">Bénéficiaire</option>
             </select>
@@ -104,25 +121,7 @@
         
             </form>
       
-            <div id="result">
-                
-                
-                    {% if result  and typo == "dict" %}
-                    
-                    <p>Le transfert a été effectué avec succès</p>
-                    
-                    {% endif %}
-                    {% if result == 0 %}
-                    <p>Le transfert a échoué. Fond insuffisant</p>
-                    
-                    {% endif %}
-                    {% if result == 1 %}
-                    <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
-                    {% endif %}
-                    
-                
-
-            </div>
+            
                 
         
             <div class="container-two" >
@@ -137,10 +136,10 @@
                         <th>Montant</th>
                         <th>Taux</th>
                         <th>Date de Création</th>
-                        <th>Communication</th>
+                        <th>Commentaire</th>
                         <th>Contre valeur</th>
                         <th>Statut</th>
-                        <th>Action</th>
+                        <!-- <th>Action</th> -->
                     </tr>
                     <tbody>
                     {% if history %}
@@ -155,7 +154,8 @@
                         <td>{{ hist['communication'] }}</td>
                         <td>{{ hist['counterValue']['value'] }}  {{ hist['counterValue']['currency'] }}</td>
                         <td>{{ hist['status'] }}</td>
-                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#9989;" name="validate_pay"></td>
+<!-- 
+                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
                     </tr>
                     {% endfor %}
                     {% endif %}
@@ -171,7 +171,7 @@
                         <td>{{ planif['communication'] }}</td>
                         <td>{{ planif['counterValue']['value'] }}  {{ planif['counterValue']['currency'] }}</td>
                         <td>{{ planif['status'] }}</td>
-                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#9989;" name="validate_pay"></td>
+                        <!-- <td><input type="button" value="X" name="delete_payment"> <input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="Edit"></td> -->
                     </tr>
                     {% endfor %}
                     {% endif %}

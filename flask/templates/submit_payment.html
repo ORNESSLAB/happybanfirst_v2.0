@@ -16,22 +16,60 @@
             <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Charger</button>
             </form>
             <div id="result">
-                
                 {% if result  and typo == "dict" %}
-                
                 <p>Le transfert a été effectué avec succès</p>
-                
                 {% endif %}
                 {% if result == 0 %}
                 <p>Le transfert a échoué. Fond insuffisant</p>
                 
                 {% endif %}
-                {% if result == 1 %}
+                {% if result == 10 %}
                 <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
+                {% endif %}
+
+                {% if payment %}
+                
+                  
+                    <table id="pay">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Expéditeur</th>
+                            <th>Bénéficiaire</th>
+                            <th>Montant</th>
+                            
+                            <th>Date de Création</th>
+                            <th>Commentaire</th>
+                            
+                            <th>Statut</th>
+                            <!-- <th>Action</th> -->
+                        </tr>
+                        <tbody>
+                        {% for pay in payment %}
+                        <tr>
+                            <td>{{ pay['payment']['id'] }}</td>
+                            <td>{{ pay['payment']['sourceWalletId'] }}</td>
+                            <td>{{ pay['payment']['externalBankAccountId'] }}</td>
+                            <td>{{ pay['payment']['amount']['value'] }}  {{ pay['payment']['amount']['currency'] }}</td>
+            
+                            <td>{{ pay['payment']['createdDate'] }}</td>
+                            <td>{{ pay['payment']['communication'] }}</td>
+                            
+                            <td>{{ pay['payment']['status'] }}</td>
+    <!-- 
+                            <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
+                        </tr>
+                           
+
+                        {% endfor %}
+                    </tbody> 
+                    </thead>
+                    </table>
+
                 {% endif %}
                 
             
-            </div>
+            
         </div>
         <div  id="wallet_list" class="container">   
             
@@ -124,64 +162,66 @@
             
                 
         
-            <div class="container-two" >
-                <caption> Historique des transferts </caption> 
-                <div class="table" >   
-                <table id="histo">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Expéditeur</th>
-                        <th>Bénéficiaire</th>
-                        <th>Montant</th>
-                        <th>Taux</th>
-                        <th>Date de Création</th>
-                        <th>Commentaire</th>
-                        <th>Contre valeur</th>
-                        <th>Statut</th>
-                        <!-- <th>Action</th> -->
-                    </tr>
-                    <tbody>
-                    {% if history %}
-                    {% for hist in history %}
-                    <tr>
-                        <td>{{ hist['id'] }}</td>
-                        <td>{{ hist['sourceWalletId'] }}</td>
-                        <td>{{ hist['externalBankAccountId'] }}</td>
-                        <td>{{ hist['amount']['value'] }}  {{ hist['amount']['currency'] }}</td>
-                        <td>{{ hist['rate']['appliedBid'] }}  {{ hist['rate']['currencyPair'] }}</td>
-                        <td>{{ hist['createdDate'] }}</td>
-                        <td>{{ hist['communication'] }}</td>
-                        <td>{{ hist['counterValue']['value'] }}  {{ hist['counterValue']['currency'] }}</td>
-                        <td>{{ hist['status'] }}</td>
-<!-- 
-                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                    {% if plan %}
-                       {% for  planif in plan %}
-                    <tr>
-                        <td>{{ planif['id'] }}</td>
-                        <td>{{ planif['sourceWalletId'] }}</td>
-                        <td>{{ planif['externalBankAccountId'] }}</td>
-                        <td>{{ planif['amount']['value'] }}  {{ planif['amount']['currency'] }}</td>
-                        <td>{{ planif['rate']['appliedBid'] }}  {{ planif['rate']['currencyPair'] }}</td>
-                        <td>{{ planif['createdDate'] }}</td>
-                        <td>{{ planif['communication'] }}</td>
-                        <td>{{ planif['counterValue']['value'] }}  {{ planif['counterValue']['currency'] }}</td>
-                        <td>{{ planif['status'] }}</td>
-                        <!-- <td><input type="button" value="X" name="delete_payment"> <input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="Edit"></td> -->
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                    </tbody>
-                    </thead>
-                </table>
-                </div>
-            
+          
             </div>
+
         </div>
+        <div class="container-two" >
+            <caption> Historique des transferts </caption> 
+            <div class="table" >   
+            <table id="histo">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Expéditeur</th>
+                    <th>Bénéficiaire</th>
+                    <th>Montant</th>
+                    <th>Taux</th>
+                    <th>Date de Création</th>
+                    <th>Commentaire</th>
+                    <th>Contre valeur</th>
+                    <th>Statut</th>
+                    <!-- <th>Action</th> -->
+                </tr>
+                <tbody>
+                {% if history %}
+                {% for hist in history %}
+                <tr>
+                    <td>{{ hist['id'] }}</td>
+                    <td>{{ hist['sourceWalletId'] }}</td>
+                    <td>{{ hist['externalBankAccountId'] }}</td>
+                    <td>{{ hist['amount']['value'] }}  {{ hist['amount']['currency'] }}</td>
+                    <td>{{ hist['rate']['appliedBid'] }}  {{ hist['rate']['currencyPair'] }}</td>
+                    <td>{{ hist['createdDate'] }}</td>
+                    <td>{{ hist['communication'] }}</td>
+                    <td>{{ hist['counterValue']['value'] }}  {{ hist['counterValue']['currency'] }}</td>
+                    <td>{{ hist['status'] }}</td>
+<!-- 
+                    <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
+                </tr>
+                {% endfor %}
+                {% endif %}
+                {% if plan %}
+                   {% for  planif in plan %}
+                <tr>
+                    <td>{{ planif['id'] }}</td>
+                    <td>{{ planif['sourceWalletId'] }}</td>
+                    <td>{{ planif['externalBankAccountId'] }}</td>
+                    <td>{{ planif['amount']['value'] }}  {{ planif['amount']['currency'] }}</td>
+                    <td>{{ planif['rate']['appliedBid'] }}  {{ planif['rate']['currencyPair'] }}</td>
+                    <td>{{ planif['createdDate'] }}</td>
+                    <td>{{ planif['communication'] }}</td>
+                    <td>{{ planif['counterValue']['value'] }}  {{ planif['counterValue']['currency'] }}</td>
+                    <td>{{ planif['status'] }}</td>
+                    <!-- <td><input type="button" value="X" name="delete_payment"> <input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="Edit"></td> -->
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+                </thead>
+            </table>
+            </div>
+        
         
         
 

@@ -214,11 +214,11 @@ def post_payment(excel_data_filename: str) -> list:
 
     payment_submit = payload(excel_data_filename)
     post_payment_response = []
-    print(payment_submit)
+    
     
     for payment in payment_submit:
         try:
-            print(f"pay type:{type(payment)}")
+            
             
             
             if payment == errorExceptions.ERROR_FUNDS:
@@ -467,7 +467,7 @@ def create_beneficiary(data:dict):
     try:
         requete = json.loads(json.dumps(mappings.mapping_ben_creation(data), indent=2))
         test = mappings.valid(requete, "orness/file/create_beneficiary_schema.json")
-        print(f"test valid: {test}")
+        
         if test:
             api = IbExternalBankAccountApi()
             return api.external_bank_accounts_post(external_bank_account=requete)

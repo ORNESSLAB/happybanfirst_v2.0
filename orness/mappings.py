@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 rd = redis.Redis(host='localhost', port=6379, db=0)
 wallets = json.loads(rd.get('wallets_info'))
 beneficiary = json.loads(rd.get('external_bank_accounts_info'))
-print (f"les wallets redis: {wallets}")
+
 
 def max_value(wallets):
     return max([float(i["amountValue"]) for i in wallets])

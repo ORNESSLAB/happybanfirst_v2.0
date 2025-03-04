@@ -65,7 +65,7 @@ def submit_payment():
             filename = secure_filename(file.filename)
             payment = utils.post_payment(filename)
             app.logger.debug(f'the payload : {payment}:   ')
-            return render_template('submit_payment.html', extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified)
+            return render_template('submit_payment.html', extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified, payment=payment)
     
     if request.method == "POST" and "add_recipient" in request.form:
         recipient = request.form.get("recipient")

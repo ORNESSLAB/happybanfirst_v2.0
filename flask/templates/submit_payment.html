@@ -40,7 +40,7 @@
                             
                             <th>Date de Création</th>
                             <th>Commentaire</th>
-                            
+                            <th>Date d'exécution</th>
                             <th>Statut</th>
                             <!-- <th>Action</th> -->
                         </tr>
@@ -54,7 +54,7 @@
             
                             <td>{{ pay['payment']['createdDate'] }}</td>
                             <td>{{ pay['payment']['communication'] }}</td>
-                            
+                            <td>{{ pay['payment']['desiredExecutionDate'] }}</td>
                             <td>{{ pay['payment']['status'] }}</td>
     <!-- 
                             <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
@@ -181,6 +181,7 @@
                     <th>Commentaire</th>
                     <th>Contre valeur</th>
                     <th>Statut</th>
+                    
                     <!-- <th>Action</th> -->
                 </tr>
                 <tbody>

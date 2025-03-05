@@ -78,88 +78,80 @@ def read_data_from_file(filename):
     """
     exc = pd.read_excel(filename).dropna(how='all')
     
-    exc['Date d’exécution'] = pd.to_datetime(exc['Date d’exécution'], errors="coerce").dt.strftime('%Y-%m-%d')
+    exc['Execution date'] = pd.to_datetime(exc['Execution date'], errors="coerce").dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
     
     return myjson
 
-def get_payment_fee_and_priority(options: list, priority: str, who_pays:str = "OUR") -> dict:
+def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:str = "OUR") -> dict:
+    """
+    Given a list of options and a priority, return the feePaymentOption, feeValue and feeCurrency associated with the given priority.
+    Parameters:
+        options (list): list of options
+        priority (str): priority to look for
+    Returns:
+        dict: a dictionary containing the feePaymentOption, feeValue and feeCurrency associated with the given priority
+    """
+
+    ERROR = errorExceptions.NO_ERROR
+    option_returned = {}
+    
+    result = [option for option in options if option["priorityPaymentOption"] == priority.upper() and option['feePaymentOption'] == who_pays][0]
+    if not options:
+        logger.error(f"No priorities found between the two accounts")
+        ERROR = errorExceptions.ERROR_NO_PRIORITY
+    if not result:
+        logger.error(f"Priority {priority} and fee payer {who_pays} not found in options: {options}")
+        ERROR = errorExceptions.ERROR_PRIORITIES_FOUND_BUT_NOT_WHAT_ENTER
         
-     
-        """
-        Given a list of options and a priority, return the feePaymentOption, feeValue and feeCurrency associated with the given priority.
-
-        Parameters:
-            options (list): list of options
-            priority (str): priority to look for
-
-        Returns:
-            dict: a dictionary containing the feePaymentOption, feeValue and feeCurrency associated with the given priority
-        """
-        frame = inspect.currentframe()
-        func = frame.f_code.co_name
-        try:
-            
-            if not options:
-                logger.error(f"No priorities found between the two accounts")
-                raise errorExceptions.NoPriorityError("No links between both accounts found")
-            if [option for option in options if option["priorityPaymentOption"] == priority.upper() and option['feePaymentOption'] == who_pays] == []:
-                
-                logger.error(f"Priority {priority} and fee payer {who_pays} not found in options: {options}")
-                raise errorExceptions.PriorityError("Priority not found")
-                
-            else:
-                result = [option for option in options if option["priorityPaymentOption"] == priority.upper()]
-                return {
-                    
-                    "feePaymentOption": result[0]["feePaymentOption"],
-                    "feeValue": result[0]["feeCost"]["value"],
-                    "feeCurrency": result[0]["feeCost"]['currency']
-                }
-
-        except errorExceptions.NoPriorityError as e:
-            logger.error(f"Error {func}: {e}")
-            traceback.print_exc()
-            return errorExceptions.ERROR_NO_PRIORITY
-          
-        except errorExceptions.PriorityError as e:
-            logger.error(f"Error {func}: {e}")
-            traceback.print_exc()
-            return errorExceptions.ERROR_PRIORITY
+    else:
+        option_returned = {
+            "feePaymentOption": result["feePaymentOption"],
+            "feeValue": result["feeCost"]["value"],
+            "feeCurrency": result["feeCost"]['currency']
+        }
+    return option_returned, ERROR
+    
         
-        except TypeError as e:
-            logger.error(f"Error {func}: {e}")
-
 def payload(excel_data_filename:str):
     #if we want to ask the user to select the priority option
-    payload_returned = []
-    
+    payload_returned = {"payment":[], "ERROR":[]}
+    line = 0
     json_data_from_excel = read_data_from_file(excel_data_filename)
     for data in json_data_from_excel:
-        if data['Expéditeur'] == 'Titulaire':
+        if data['Sender'] == 'Name':
             continue
-        payment_submit = mappings.mapping_payment_submit_v2(data)
-        if not payment_submit['externalBankAccountId']:
-            logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
-            continue
-        if not payment_submit['sourceWalletId']:
-            logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
-            continue
-        if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
-            logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
-            continue
-        #payload_returned.append(payload_dict(payment_submit))
-        # Get fee priority Payment Options
-        options = retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
-        logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
-        properties = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
-        
-        if properties == errorExceptions.ERROR_PRIORITY or properties == errorExceptions.ERROR_NO_PRIORITY or properties == errorExceptions.ERROR_FUNDS:
-            continue
-        
-        payment_submit["feePaymentOption"] = properties['feePaymentOption']
-        payment_submit["feeCurrency"] = properties['feeCurrency']
-        payload_returned.append(payment_submit)
+        payment_submit, ERRORS = mappings.mapping_payment_submit_v2(data)
+        if payment_submit:
+            # if not payment_submit['externalBankAccountId']:
+            #     logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
+            #     continue
+            # if not payment_submit['sourceWalletId']:
+            #     logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
+            #     continue
+            # if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
+            #     logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
+            #     continue
+            #payload_returned.append(payload_dict(payment_submit))
+            # Get fee priority Payment Options
+            options= retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
+            logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
+            properties, OPT_ERROR  = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+            
+            if OPT_ERROR:
+                payload_returned["ERROR"].append(OPT_ERROR)
+                payload_returned["payment"].append(f"Line-{line}")
+                continue
+            
+            
+            payment_submit["feePaymentOption"] = properties['feePaymentOption']
+            payment_submit["feeCurrency"] = properties['feeCurrency']
+            payload_returned['payment'].append(payment_submit)
+            payload_returned["ERROR"].append(ERRORS)
+        else:
+            payload_returned["ERROR"].append(ERRORS)
+            payload_returned["payment"].append(f"Line-{line}")
+        line += 1
     return payload_returned
 def payload_dict(data:dict):
     
@@ -214,37 +206,23 @@ def post_payment(excel_data_filename: str) -> list:
 
     payment_submit = payload(excel_data_filename)
     post_payment_response = []
+    ERRORS = []
+    line = []
     
     
     for payment in payment_submit:
-        try:
-            
-            
-            
-            if payment == errorExceptions.ERROR_FUNDS:
-                continue
-            if payment == errorExceptions.ERROR_PRIORITY:
-                continue
-            if payment_submit == errorExceptions.ERROR_NO_PRIORITY:
-                continue
-                        #logger.info("Start payment of {}".format(pprint.pprint(payment)))
+        if isinstance(payment['payment'], dict):
 
-            api = IbPaymentsApi()
-            post_payment_response.append(api.payments_post(payment=payment).json())
-                    
-            
-        except errorExceptions.PriorityError as e:
-            logger.error(f"Error : {e}")
-            traceback.print_exc()
-            return errorExceptions.ERROR_PRIORITY
-        except errorExceptions.NoFund as e:
-            logger.error(f"Error : {e}")
-            traceback.print_exc()
-            return errorExceptions.ERROR_FUNDS
-        except ApiException as e:
-            logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+            try:
+                api = IbPaymentsApi()
+                post_payment_response.append(api.payments_post(payment=payment).json())         
+            except ApiException as e:
+                logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+        else:
+            ERRORS.append(payment["ERROR"])
+            line.append(payment['payment'])
 
-    return post_payment_response
+    return post_payment_response, ERRORS, line
     
 def post_payment_from_form(form_data: dict):
     
@@ -483,28 +461,28 @@ rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
 rd.set('payments_planified', json.dumps(get_payments_status('planified')['payments']))
 
 if __name__ == '__main__':
-    file_a = 'new_payment.xlsx'
     file_b = 'new_payments_v2.xlsx'
+   
 
-    #print(post_payment(file_b))
+    print(post_payment(file_b))
     #print(get_wallets())
     #print(post_payment(file_a))
     #print(get_wallet_holder_info())
     #print(list_wallets_from_file(file_a))
     #retreive_option_list(wallet_id="", external_id="Njc1NzI")
     #print(check_if_external_bank_account_exist(external_bank_account_id="Njc1NzI"))
-    #payload(file_a)
+    #print(payload(file_b))
     kg={"Bénéficiaire": "10943409100132",
-        "Expéditeur": "BE39914001921319",
+        "Sender": "BE39914001921319",
         "Commentaire": "",
         "Libellé": "",
         "Montant": "14",
-        "Date d’exécution": "2025-03-18",
+        "Execution date": "2025-03-18",
         "Urgence": "48H",
         "Détails des frais": ""
     }
 
-    jason2 = {'Priorité': '1H', 'Bénéficiaire': '314b065159e8e9c', 'Expéditeur': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 'Montant': '2', 'Date désirée': ''}
+    jason2 = {'Priorité': '1H', 'Bénéficiaire': '314b065159e8e9c', 'Sender': 'BE39914001921319', 'Commentaire': '', 'Libellé': '', 'Montant': '2', 'Date désirée': ''}
     ext = {
     "currency": "EUR",
     "tag": "mon extern",
@@ -536,7 +514,7 @@ if __name__ == '__main__':
     }
 }
     #authentication("mn11256", "61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==")
-    print(post_payment_from_form(kg))
+    #print(post_payment_from_form(kg))
     # print(rd.get('wallets_info'))
     #print(rd.get('payments_histo')[0]['sourceWalletId'])
     #print(check_account_value(wallet_id="OTg1OTE", amount=12))

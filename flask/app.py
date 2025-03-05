@@ -77,24 +77,24 @@ def submit_payment():
     
     if request.method == "POST":
         urgency = request.form.get("urgency")
-        data['Urgence'] = ""
+        data['Priority'] = ""
         if urgency == "Urgent":
-            data['Urgence'] = "1H"
+            data['Priority'] = "1H"
         if urgency == "Normal":
-            data['Urgence'] = "24H"
+            data['Priority'] = "24H"
         if urgency == "Différé":
-            data['Urgence'] = "48H"
+            data['Priority'] = "48H"
         
         
         
-        data['Bénéficiaire']= request.form.get('ext_iban')
+        data['Recipient']= request.form.get('ext_iban')
 
-        data["Détails des frais"] = request.form.get('who_pay_fees')
-        data['Commentaire'] = request.form.get("comment")
-        data['Libellé']= request.form.get("tag")
-        data['Montant']= request.form.get("amount")
-        data['Expéditeur'] = request.form.get("source_Id")
-        data["Date d’exécution"]= request.form.get("date")
+        data["Fees option"] = request.form.get('who_pay_fees')
+        data['Comment'] = request.form.get("comment")
+        data['Description']= request.form.get("tag")
+        data['Amount']= request.form.get("amount")
+        data['Sender'] = request.form.get("source_Id")
+        data["Execution date"]= request.form.get("date")
         
         app.logger.debug(f'{data}:   ')
         result = utils.post_payment_from_form(form_data=data)
@@ -151,11 +151,11 @@ def create_account():
         data["holderBank"]["clearingCodeType"] = request.form.get("clearingCodeType")
         data["holderBank"]["clearingCode"] = request.form.get("clearingCode")
 
-        result = 0 #utils.create_beneficiary(data)
+        
         
         app.logger.debug(f"external: {data}")
         app.logger.debug(f"{result}:   ")
-        return render_template("submit_payment.html", data=data, result=result)
+        return render_template("submit_payment.html", data=data)
         
 
 

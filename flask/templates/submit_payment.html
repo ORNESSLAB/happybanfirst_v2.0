@@ -9,11 +9,11 @@
 </head>
     <body>
         
-        <div style="margin-bottom: 7px; margin-left: 350px;margin-right: 250px; ">
+        <div class='container-two'>
             <form method="POST" id="upload" enctype="multipart/form-data">
-            <label for="pay_file">Inserez un tableau excel :</label> <br>
+            <label for="pay_file">Load an Excel table:</label> <br>
             <input type="file" name="file" id="pay_file"> </input>
-            <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Charger</button>
+            <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Load</button>
             </form>
             <div id="result">
                 {% if result  and typo == "dict" %}
@@ -34,14 +34,14 @@
                         <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Expéditeur</th>
-                            <th>Bénéficiaire</th>
-                            <th>Montant</th>
+                            <th>Sender</th>
+                            <th>Recipent</th>
+                            <th>Amount</th>
                             
-                            <th>Date de Création</th>
-                            <th>Commentaire</th>
-                            <th>Date d'exécution</th>
-                            <th>Statut</th>
+                            <th>Creation Date</th>
+                            <th>Commente</th>
+                            <th>Execution Date</th>
+                            
                             <!-- <th>Action</th> -->
                         </tr>
                         <tbody>
@@ -55,13 +55,30 @@
                             <td>{{ pay['payment']['createdDate'] }}</td>
                             <td>{{ pay['payment']['communication'] }}</td>
                             <td>{{ pay['payment']['desiredExecutionDate'] }}</td>
-                            <td>{{ pay['payment']['status'] }}</td>
+                            
     <!-- 
                             <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
                         </tr>
                            
 
                         {% endfor %}
+                        {% else %}
+                        {% set flag = 0 %}
+                        {% for err in error_pay %}
+                            {% if err[0]  == {'SOURCE_ERROR': 0, 'BENEFICIARY_ERROR': 0, 'ERROR_CURRENCY': 0, 'AMOUNT_ERROR': 0} %}
+                            
+                            <p> {{ err[1] }}: OK</p>
+                            {% else %}
+                            {% set flag = 1 %}
+                            <p> {{ err[1] }}: NOK</p>
+                            {% endif %}
+                        {% endfor %}
+                        {% if flag == 1 %}
+                        <p>Errors in the table found. Please check the Currency, Sender or the recipient informations.</p>
+                        {% endif %}
+
+                        
+
                     </tbody> 
                     </thead>
                     </table>
@@ -70,10 +87,9 @@
                 
             
             
-        </div>
-        <div  id="wallet_list" class="container">   
-            
-            <form method="POST">
+            </div>
+        <!-- <div  id="wallet_list" class="container">    
+             <form method="POST">
             
                 <h2> Comptes </h2><br>
                 {% if wallets_list %}
@@ -157,30 +173,25 @@
             
 
         
-            </form>
-      
-            
-                
-        
-          
-            </div>
+            </form> 
+            </div> -->
 
         </div>
         <div class="container-two" >
-            <caption> Historique des transferts </caption> 
+            <caption> History of transactions </caption> 
             <div class="table" >   
             <table id="histo">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Expéditeur</th>
-                    <th>Bénéficiaire</th>
-                    <th>Montant</th>
-                    <th>Taux</th>
-                    <th>Date de Création</th>
-                    <th>Commentaire</th>
-                    <th>Contre valeur</th>
-                    <th>Statut</th>
+                    <th>Sender</th>
+                    <th>Recipient</th>
+                    <th>Amount</th>
+                    <th>Rate</th>
+                    <th>Creation Date</th>
+                    <th>Comment</th>
+                    <th>Counter Value</th>
+                    <th>Status</th>
                     
                     <!-- <th>Action</th> -->
                 </tr>
@@ -222,6 +233,7 @@
                 </thead>
             </table>
             </div>
+        </div>
         
         
         

@@ -1,6 +1,6 @@
 import json
 import re
-from flask  import Flask, render_template, request, flash, redirect, url_for
+from flask  import Flask, render_template, request, flash, redirect, url_for, session
 import os
 
 from orness import utils
@@ -63,9 +63,9 @@ def submit_payment():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            payment = utils.post_payment(filename)
+            payment, error = utils.post_payment(filename)
             app.logger.debug(f'the payload : {payment}:   ')
-            return render_template('submit_payment.html', extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified, payment=payment)
+            return render_template('submit_payment.html', extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets, plan=pay_planified, payment=payment, error_pay=error)
     
     if request.method == "POST" and "add_recipient" in request.form:
         recipient = request.form.get("recipient")

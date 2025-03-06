@@ -1,15 +1,9 @@
 import argparse
 import base64
 import os
-import json
 import binascii
 import hashlib
 from datetime import datetime, timezone
-
-
-#USER_ID = os.getenv("USER_ID")
-#PASSWORD = os.getenv("PASSWORD")
-
 
 class IBanFirst:
     def __init__(self, user_id: str, password: str):
@@ -53,25 +47,4 @@ class IBanFirst:
         }
         return header
 
-def parserArg():
-    parser = argparse.ArgumentParser(
-                    prog='TokenGen',
-                    description='This program will you a token you must use to connect iBanfirst',
-                    epilog='Text at the bottom of help')
-    parser.add_argument("--user_id",'-u', help="this is user id",type=str)
-    parser.add_argument("--password", "-p", type=str)
-    return parser.parse_args()   
 
-
-def main(arg):
-
-    try:
-        ibanfirst = IBanFirst(user_id=arg.user_id, password=arg.password)
-        print(ibanfirst.generate_header())
-    except Exception as e:
-        print(f"Error {e}")
-
-
-if __name__ == "__main__":
-    arg = parserArg()
-    main(arg)

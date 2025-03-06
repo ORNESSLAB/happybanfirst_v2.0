@@ -227,6 +227,7 @@ input[type="time"] {
     margin-top: 30px;
     border-right: 1px solid rgb(228, 220, 220);
     border-left: 1px solid rgb(228, 220, 220);
+    border-radius: 10px;
     display: flex;
     gap: 2px;
     flex-wrap: wrap;
@@ -326,4 +327,10 @@ a {
 }
 a:hover {
     color: #45a049;
+}
+p {
+    font-size: x-small;
+}
+label {
+    font-size: smaller
 }

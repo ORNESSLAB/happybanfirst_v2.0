@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 rd = redis.Redis(host='localhost', port=6379, db=0)
 wallets = json.loads(rd.get('wallets_info'))
 beneficiary = json.loads(rd.get('external_bank_accounts_info'))
-
+recip_iban = 'Unnamed: 3'
+send_iban = 'Unnamed: 1'
 
 def max_value(wallets):
     return max([float(i["amountValue"]) for i in wallets])
@@ -38,17 +39,11 @@ def number_of_same_object_holder_name(holder_name:str, objet) -> int:
     int
         The number of external bank accounts or wallet with the same holder name
     """
+     
+    return len([i for i in json.loads(rd.get(objet)) if i['holderName'] == holder_name])
    
 
-    try:
-        
-        return len([i for i in json.loads(rd.get(objet)) if i['holderName'] == holder_name])
-        
-    except Exception as e:
-        logger.error(e)
-        return 0
-
-def get_object_with_same_name(name:str, objet='external_bank_accounts_info'):
+def number_object_with_same_iban(iban:str, objet='external_bank_accounts_info'):
     """_summary_
 
     Args:
@@ -58,7 +53,7 @@ def get_object_with_same_name(name:str, objet='external_bank_accounts_info'):
     Returns:
         _type_: _description_
     """
-    return [i['holderIBAN'] for i in json.loads(rd.get(objet)) if i['holderName'] == name ]
+    return len([i for i in json.loads(rd.get(objet)) if i['holderIBAN'] == iban ])
 
 
 
@@ -69,47 +64,59 @@ def check_if_beneficiary_name(holderName:str):
 def choose_the_wallet(data):
     ERROR = error_exception.NO_ERROR
     source_Id=[]
-    if (data['Sender'] and not data['Unnamed: 1']): 
-        if number_of_same_object_holder_name(data['Sender'], objet="wallets_info") > 1:
-            ERROR = error_exception.WALLET_IBAN_NOT_PROVIDED
-        
-    if data['Sender'] and  data['Unnamed: 1']:
+    if not data['Sender'] and not data[send_iban] and len(wallets) == 1:
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets ]
+    if not data['Sender'] and not data[send_iban] and len(wallets) > 1:
+        ERROR = error_exception.SENDER_IBAN_NOT_PROVIDED
 
-        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data['Unnamed: 1'] and k['holderName'] == data['Sender']]
+    if data['Sender'] and not data[send_iban] and number_of_same_object_holder_name(data['Sender'], objet="wallets_info") > 1:
+        ERROR = error_exception.TOO_MUCH_SENDER_IBAN_FOUND
+    if data['Sender'] and not data[send_iban] and number_of_same_object_holder_name(data['Sender'], objet="wallets_info") == 1:
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderName'] == data['Sender']]
         if not source_Id:
-            ERROR = error_exception.WALLET_NOT_RETREIVED
-        elif float(source_Id[0][2]) > float(data['Amount']):
+            ERROR = error_exception.SENDER_NOT_RETREIVED
+        elif source_Id[0][2] and float(source_Id[0][2]) > float(data['Amount']):
             source_Id = source_Id
         else:
             ERROR = error_exception.NOT_ENOUGH_FUND
-            
-    if not data['Sender'] and not data['Unnamed: 1']:
-        ERROR = error_exception.WALLET_IBAN_NOT_PROVIDED
-        
-    if data['Unnamed: 1']:
-        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data['Unnamed: 1']]
+
+    if not data['Sender'] and data[send_iban] and number_object_with_same_iban(data[send_iban], objet="wallets_info") > 1:
+        ERROR = error_exception.SENDER_NOT_RETREIVED
+    if not data['Sender'] and data[send_iban] and number_object_with_same_iban(data[send_iban], objet="wallets_info") == 1:
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data[send_iban]] 
         if not source_Id:
-            ERROR = error_exception.WALLET_NOT_RETREIVED
-        elif float(source_Id[0][2]) > float(data['Amount']):
+            ERROR = error_exception.SENDER_NOT_RETREIVED
+        elif source_Id[0][2] and float(source_Id[0][2]) > float(data['Amount']):
+            source_Id = source_Id
+        else:
+            ERROR = error_exception.NOT_ENOUGH_FUND  
+    
+    if data['Sender'] and  data[send_iban]:
+        source_Id = [(k['id'], k['amountCurrency'], k["amountValue"]) for k in wallets  if k['holderIBAN'] == data[send_iban] and k['holderName'] == data['Sender']]
+        if not source_Id:
+            ERROR = error_exception.SENDER_NOT_RETREIVED
+        elif source_Id[0][2] and float(source_Id[0][2]) > float(data['Amount']):
             source_Id = source_Id
         else:
             ERROR = error_exception.NOT_ENOUGH_FUND
-            
-            
+                   
     return source_Id, ERROR
 
 def choose_beneficiary(data):
     ERROR = error_exception.NO_ERROR
     benef = []
-    if not data['Unnamed: 3'] or  not data['Recipient']:
-        ERROR = error_exception.BENEFICIARY_IBAN_NOT_PROVIDED
-       
-    if data['Unnamed: 3'] and data['Recipient']:
-        benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderName'] == data['Recipient'] and k['holderIBAN'] == data['Unnamed: 3']]
+    if not data[recip_iban] and not data['Recipient']:
+        ERROR = error_exception.BENEFICIARY_NAME_AND_IBAN_NOT_PROVIDED
+    if data[recip_iban] and data['Recipient']:
+        benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderName'] == data['Recipient'] and k['holderIBAN'] == data[recip_iban]]
         if not benef:
             ERROR = error_exception.NO_BENEFICIARY_FOUND
+    if data['Recipient'] and number_of_same_object_holder_name(holder_name=data['Recipient'], objet='external_bank_accounts_info') == 1:
+        benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderName'] == data['Recipient']]
+    elif data[recip_iban] and number_object_with_same_iban(iban=data[recip_iban], objet="external_bank_accounts_info") == 1:
+        benef = [(k['id'], k['currency']) for k in beneficiary  if k['holderIBAN'] == data[recip_iban]]
     else:
-        ERROR = error_exception.BENEFICIARY_NAME_NOT_PROVIDED
+        ERROR = error_exception.TOO_MUCH_BENEFICIARY_IBAN
     return benef, ERROR
     
 
@@ -367,9 +374,13 @@ def mapping_payment_submit_v2(data:dict) -> dict:
     source_Id, SOURCE_ERROR = choose_the_wallet(data=data)
     if not source_Id or not external_Id:
         print(f"les erreurs wallets: {SOURCE_ERROR} et {BENEFICIARY_ERROR}")
-        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR}
+        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "ERROR_CURRENCY": error_exception.NO_ERROR, "AMOUNT_ERROR": error_exception.NO_ERROR}
+    if not data['Amount']:
+        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "AMOUNT_ERROR": error_exception.AMOUNT_NOT_PROVIDED, "ERROR_CURRENCY": error_exception.NO_ERROR}
+
     
-    if source_Id[0][1] == external_Id[0][1] == data["Currency"].upper():
+    if external_Id[0][1] == data["Currency"] or not data["Currency"]:
+        data["Currency"] = external_Id[0][1]
     
         payment_submit['externalBankAccountId'] = external_Id[0][0]
         payment_submit['sourceWalletId'] = source_Id[0][0]
@@ -389,20 +400,20 @@ def mapping_payment_submit_v2(data:dict) -> dict:
             payment_submit['feePaymentOption'] = "OUR"
         payment_submit['tag'] = data['Description'] if data['Description'] else ''
         payment_submit['communication'] = data['Comment'] if data['Comment'] else ''
-        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR}
+        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "ERROR_CURRENCY": error_exception.NO_ERROR, "AMOUNT_ERROR": error_exception.NO_ERROR}
     else:
-        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "ERROR_CURRENCY": error_exception.CURRENCY_NOT_THE_SAME_BETWEEN_WALLET_AND_BEN}
+        return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "ERROR_CURRENCY": error_exception.CURRENCY_NOT_THE_SAME_BETWEEN_SENDER_AND_BEN, "AMOUNT_ERROR": error_exception.NO_ERROR}
     
     
 
 if __name__ == '__main__':
-    #data = {'Sender': '', 'Unnamed: 1': 'BE17914001921521', 'Recipient': '87ac164a37e96db', 'Unnamed: 3': '', 'Amount': 600.0, 'Execution date': "2025-03-24", 'Fees option': 'client', 'Priority': None, 'Description': None, 'Comment': None}
+    data = {'Sender': '', 'Unnamed: 1': 'BE39914001921319', 'Recipient': '314b065159e8e9c', 'Unnamed: 3': 'RS35155000000000563774', 'Amount': 600.0, 'Currency':'', 'Execution date': "2025-03-24", 'Fees option': 'client', 'Priority': None, 'Description': None, 'Comment': None}
     #     {'Sender': 'TEST API ORNESS', 'Unnamed: 1': 'BE17914001921521', 'Recipient': 'b44126a0e90b4d4', 'Unnamed: 3': 'RS35160005010008573607', 'Amount': 25.0, 'Execution date': "2025-03-15", 'Fees option': 'Recipient', 'Priority': None, 'Description': None, 'Comment': None, 'Currency':''},
-    data = {'Sender': 'TEST API ORNESS', 'Unnamed: 1': 'BE39914001921319', 'Recipient': '87ac164a37e96db', 'Unnamed: 3': '44717721356', 'Amount': 9.0, 'Execution date': "2025-03-14", 'Fees option': 'partagé', 'Priority': None, 'Description': None, 'Comment': None, 'Currency':'eur'}
+    #data = {'Sender': 'TEST API ORNESS', 'Unnamed: 1': 'BE39914001921319', 'Recipient': '87ac164a37e96db', 'Unnamed: 3': '44717721356', 'Amount': 9.0, 'Execution date': "2025-03-14", 'Fees option': 'partagé', 'Priority': None, 'Description': None, 'Comment': None, 'Currency':'eur'}
     ben = {'id': 'ODYyMjM', 'holderName': '87ac164a37e96db', 'holderBankBic': 'SCBLHKHHXXX', 'holderIBAN': '44717721356', 'currency': 'USD'}
     #print(choose_beneficiary(data))
     #print([(k['id'], k['currency']) for k in beneficiary  if k['holderName'] ==  "87ac164a37e96db" and k['holderIBAN'] == "44717721356"])
-    print(date_format(""))
+    #print(date_format(""))
     print(mapping_payment_submit_v2(data=data))
 
     

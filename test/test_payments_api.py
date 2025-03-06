@@ -82,6 +82,19 @@ class TestPaymentsApi(unittest.TestCase):
         pay = utils.post_payment_from_form(test)
         self.assertIsInstance(pay, dict)
     
+    def test_payment_with_ben_who_has_multiple_name_or_iban(self):
+        test = {
+            "Bénéficiaire": "FR1130002005440000007765L61",
+            "Expéditeur": "BE39914001921319",
+            "Commentaire": "",
+            "Libellé": "",
+            "Montant": "14",
+            "Date d’exécution": "2025-03-28",
+            "Urgence": "",
+            "Détails des frais": "OUR"
+        }
+        pay = utils.post_payment_from_form(test)
+        self.assertIsInstance(pay, dict)
 
     def test_payments_options_wallet_id_external_bank_account_id_get(self):
         """Test case for payments_options_wallet_id_external_bank_account_id_get

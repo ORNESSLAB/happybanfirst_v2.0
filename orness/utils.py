@@ -123,34 +123,22 @@ def payload(excel_data_filename:str):
             continue
         payment_submit, ERRORS = mappings.mapping_payment_submit_v2(data)
         if payment_submit:
-            # if not payment_submit['externalBankAccountId']:
-            #     logger.error(f'Recipient IBAN {payment_submit['externalBankAccountId']} -> has not been entered')
-            #     continue
-            # if not payment_submit['sourceWalletId']:
-            #     logger.error(f'Issuing Account IBAN {payment_submit['externalBankAccountId']} has not been given')
-            #     continue
-            # if not check_account_value(wallet_id=payment_submit['sourceWalletId'], amount=float(payment_submit['amount']['value'])):
-            #     logger.error(f'Insufficient funds in the account {payment_submit['sourceWalletId']}')
-            #     continue
-            #payload_returned.append(payload_dict(payment_submit))
-            # Get fee priority Payment Options
             options= retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
             logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
             properties, OPT_ERROR  = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
             
             if OPT_ERROR:
-                payload_returned["ERROR"].append(OPT_ERROR)
-                payload_returned["payment"].append(f"Line-{line}")
+                payload_returned["ERROR"].append((OPT_ERROR, f"Line-{line}"))
                 continue
             
             
             payment_submit["feePaymentOption"] = properties['feePaymentOption']
             payment_submit["feeCurrency"] = properties['feeCurrency']
             payload_returned['payment'].append(payment_submit)
-            payload_returned["ERROR"].append(ERRORS)
+            payload_returned["ERROR"].append((ERRORS, f"Line-{line}"))
         else:
-            payload_returned["ERROR"].append(ERRORS)
-            payload_returned["payment"].append(f"Line-{line}")
+            payload_returned["ERROR"].append((ERRORS,f"Line-{line}"))
+            
         line += 1
     return payload_returned
 def payload_dict(data:dict):
@@ -204,25 +192,30 @@ def walletload(excel_data_filename: str) -> list:
 
 def post_payment(excel_data_filename: str) -> list:
 
-    payment_submit = payload(excel_data_filename)
+    load_pay = payload(excel_data_filename)
+    print(load_pay)
+    payment_sub = load_pay['payment']
+    error = load_pay['ERROR']
+    flag = 0
     post_payment_response = []
-    ERRORS = []
-    line = []
     
-    
-    for payment in payment_submit:
-        if isinstance(payment['payment'], dict):
-
-            try:
-                api = IbPaymentsApi()
-                post_payment_response.append(api.payments_post(payment=payment).json())         
-            except ApiException as e:
-                logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+    for er in error:
+        if er[0]['SOURCE_ERROR'] == er[0]['BENEFICIARY_ERROR'] == er[0]['ERROR_CURRENCY']:
+            flag = 1
         else:
-            ERRORS.append(payment["ERROR"])
-            line.append(payment['payment'])
-
-    return post_payment_response, ERRORS, line
+            logger.error(f"Error in the file: {er}")
+            flag = 0
+            return post_payment_response, error
+    if flag == 1:
+        for val in payment_sub:               
+            if isinstance(val, dict):
+                
+                try:
+                    api = IbPaymentsApi()
+                    post_payment_response.append(api.payments_post(payment=val).json())         
+                except ApiException as e:
+                    logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")   
+    return post_payment_response, error
     
 def post_payment_from_form(form_data: dict):
     

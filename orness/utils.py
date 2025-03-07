@@ -4,8 +4,6 @@ import logging
 import os
 import sys
 import pprint
-import inspect
-
 import traceback
 from orness import error_exception as  errorExceptions
 import pandas as pd
@@ -120,18 +118,16 @@ def payload(excel_data_filename:str):
     json_data_from_excel = read_data_from_file(excel_data_filename)
     for data in json_data_from_excel:
         if data['Sender'] == 'Name':
+            line += 1
             continue
         payment_submit, ERRORS = mappings.mapping_payment_submit_v2(data)
         if payment_submit:
             options= retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
-            logger.debug(f"Build the JSON body for payment operation with {payment_submit['externalBankAccountId']} and {payment_submit['sourceWalletId']}")
             properties, OPT_ERROR  = get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
             
             if OPT_ERROR:
                 payload_returned["ERROR"].append((OPT_ERROR, f"Line-{line}"))
                 continue
-            
-            
             payment_submit["feePaymentOption"] = properties['feePaymentOption']
             payment_submit["feeCurrency"] = properties['feeCurrency']
             payload_returned['payment'].append(payment_submit)
@@ -193,7 +189,6 @@ def walletload(excel_data_filename: str) -> list:
 def post_payment(excel_data_filename: str) -> list:
 
     load_pay = payload(excel_data_filename)
-    print(load_pay)
     payment_sub = load_pay['payment']
     error = load_pay['ERROR']
     flag = 0
@@ -448,18 +443,21 @@ def create_beneficiary(data:dict):
         return None
 
 
+
 rd.set('external_bank_accounts_info', json.dumps(get_external_bank_account_info()))
 rd.set('wallets_info', json.dumps(get_wallet_holder_info()))
 rd.set('payments_histo', json.dumps(get_payments_status()['payments']))
 rd.set('payments_planified', json.dumps(get_payments_status('planified')['payments']))
 
+
+
 if __name__ == '__main__':
+    import time
     file_b = 'new_payments_v2.xlsx'
    
-
-    print(post_payment(file_b))
+    
     #print(get_wallets())
-    #print(post_payment(file_a))
+    print(post_payment(file_b))
     #print(get_wallet_holder_info())
     #print(list_wallets_from_file(file_a))
     #retreive_option_list(wallet_id="", external_id="Njc1NzI")

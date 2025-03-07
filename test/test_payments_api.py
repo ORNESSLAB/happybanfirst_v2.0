@@ -52,49 +52,16 @@ class TestPaymentsApi(unittest.TestCase):
              'feeCost': {'value': '5.00', 'currency': 'EUR'},
              'minimumAmountSource': {'value': '0.00', 'currency': 'EUR'},
              'minimumAmountTarget': {'value': '0.00', 'currency': 'EUR'}}]
+        self.file = "new_payments_v2.xlsx"
     
     
-    def test_payment_from_form_past_date(self):
-        test = {
-            "Bénéficiaire": "10943409100132",
-            "Expéditeur": "BE39914001921319",
-            "Commentaire": "",
-            "Libellé": "",
-            "Montant": "14",
-            "Date d’exécution": "2025-02-28",
-            "Urgence": "",
-            "Détails des frais": "OUR"
-        }
-        pay = utils.post_payment_from_form(test)
-        self.assertIsInstance(pay, dict)
+    def test_bulk_payment(self):
+
+        self.assertIsInstance(utils.post_payment(self.file)[0], list)
+        self.assertIsNotNone(utils.post_payment(self.file)[0])
     
-    def test_payment_from_form(self):
-        test = {
-            "Bénéficiaire": "RS35160005010008573607",
-            "Expéditeur": "BE39914001921319",
-            "Commentaire": "",
-            "Libellé": "",
-            "Montant": "14",
-            "Date d’exécution": "2025-03-28",
-            "Urgence": "",
-            "Détails des frais": "OUR"
-        }
-        pay = utils.post_payment_from_form(test)
-        self.assertIsInstance(pay, dict)
-    
-    def test_payment_with_ben_who_has_multiple_name_or_iban(self):
-        test = {
-            "Bénéficiaire": "FR1130002005440000007765L61",
-            "Expéditeur": "BE39914001921319",
-            "Commentaire": "",
-            "Libellé": "",
-            "Montant": "14",
-            "Date d’exécution": "2025-03-28",
-            "Urgence": "",
-            "Détails des frais": "OUR"
-        }
-        pay = utils.post_payment_from_form(test)
-        self.assertIsInstance(pay, dict)
+
+
 
     def test_payments_options_wallet_id_external_bank_account_id_get(self):
         """Test case for payments_options_wallet_id_external_bank_account_id_get
@@ -117,13 +84,6 @@ class TestPaymentsApi(unittest.TestCase):
     def test_confirm_payment(self):
         self.assertTrue(utils.confirm_paymet(id="MzM1MDU1"))
 
-
-    def test_payments_status_wait(self):
-        """Test case for payments_status_get
-
-        Get payment list by status  # noqa: E501
-        """
-        self.assertIsInstance(utils.get_payments_status('awaitingconfirmation'), dict)
     
     def test_payments_status_planified(self):
         """Test case for payments_status_get

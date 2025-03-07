@@ -9,85 +9,16 @@
 </head>
     <body>
         
+    
+          
+        
         <div class='container-two'>
-            <form method="POST" id="upload" enctype="multipart/form-data">
-            <label for="pay_file">Load an Excel table:</label> <br>
-            <input type="file" name="file" id="pay_file"> </input>
-            <button name="excel" style="width: 60px; height: 25px; background-color: rgb(6, 197, 6);" type="submit">Load</button>
+            <form method="POST" id="upload" enctype="multipart/form-data" >
+            <label for="pay_file" ">Load an Excel table</label> <br>
+            <input type="file" name="file" id="pay_file" accept="xls*"; > </input>
+            <button name="excel" style="border-radius:5px; width: 60px; height: 25px; background-color: rgb(227, 247, 227); " type="submit">Load</button>
             </form>
-            <div id="result">
-                {% if result  and typo == "dict" %}
-                <p>Le transfert a été effectué avec succès</p>
-                {% endif %}
-                {% if result == 0 %}
-                <p>Le transfert a échoué. Fond insuffisant</p>
-                
-                {% endif %}
-                {% if result == 10 %}
-                <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
-                {% endif %}
-
-                {% if payment %}
-                
-                  
-                    <table id="pay">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Sender</th>
-                            <th>Recipent</th>
-                            <th>Amount</th>
-                            
-                            <th>Creation Date</th>
-                            <th>Commente</th>
-                            <th>Execution Date</th>
-                            
-                            <!-- <th>Action</th> -->
-                        </tr>
-                        <tbody>
-                        {% for pay in payment %}
-                        <tr>
-                            <td>{{ pay['payment']['id'] }}</td>
-                            <td>{{ pay['payment']['sourceWalletId'] }}</td>
-                            <td>{{ pay['payment']['externalBankAccountId'] }}</td>
-                            <td>{{ pay['payment']['amount']['value'] }}  {{ pay['payment']['amount']['currency'] }}</td>
             
-                            <td>{{ pay['payment']['createdDate'] }}</td>
-                            <td>{{ pay['payment']['communication'] }}</td>
-                            <td>{{ pay['payment']['desiredExecutionDate'] }}</td>
-                            
-    <!-- 
-                            <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
-                        </tr>
-                           
-
-                        {% endfor %}
-                        {% else %}
-                        {% set flag = 0 %}
-                        {% for err in error_pay %}
-                            {% if err[0]  == {'SOURCE_ERROR': 0, 'BENEFICIARY_ERROR': 0, 'ERROR_CURRENCY': 0, 'AMOUNT_ERROR': 0} %}
-                            
-                            <p> {{ err[1] }}: OK</p>
-                            {% else %}
-                            {% set flag = 1 %}
-                            <p> {{ err[1] }}: NOK</p>
-                            {% endif %}
-                        {% endfor %}
-                        {% if flag == 1 %}
-                        <p>Errors in the table found. Please check the Currency, Sender or the recipient informations.</p>
-                        {% endif %}
-
-                        
-
-                    </tbody> 
-                    </thead>
-                    </table>
-
-                {% endif %}
-                
-            
-            
-            </div>
         <!-- <div  id="wallet_list" class="container">    
              <form method="POST">
             
@@ -177,6 +108,79 @@
             </div> -->
 
         </div>
+        <div id="result" class="container-two">
+            {% if result  and typo == "dict" %}
+            <p>Le transfert a été effectué avec succès</p>
+            {% endif %}
+            {% if result == 0 %}
+            <p>Le transfert a échoué. Fond insuffisant</p>
+            
+            {% endif %}
+            {% if result == 10 %}
+            <p>Le transfert a échoué. Urgence: {{ data['Priorité'] }} n'est pas possible pour compte</p>
+            {% endif %}
+
+            {% if payment %}
+            
+              
+                <table id="pay">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sender</th>
+                        <th>Recipent</th>
+                        <th>Amount</th>
+                        
+                        <th>Creation Date</th>
+                        <th>Commente</th>
+                        <th>Execution Date</th>
+                        
+                        <!-- <th>Action</th> -->
+                    </tr>
+                    <tbody>
+                    {% for pay in payment %}
+                    <tr>
+                        <td>{{ pay['payment']['id'] }}</td>
+                        <td>{{ pay['payment']['sourceWalletId'] }}</td>
+                        <td>{{ pay['payment']['externalBankAccountId'] }}</td>
+                        <td>{{ pay['payment']['amount']['value'] }}  {{ pay['payment']['amount']['currency'] }}</td>
+        
+                        <td>{{ pay['payment']['createdDate'] }}</td>
+                        <td>{{ pay['payment']['communication'] }}</td>
+                        <td>{{ pay['payment']['desiredExecutionDate'] }}</td>
+                        
+<!-- 
+                        <td><input type="button" value="X" name="delete_payment"><input type="button" style="padding-left: 0; padding-right: 0;" value="&#128394;;" name="validate_pay"></td> -->
+                    </tr>
+                       
+
+                    {% endfor %}
+                    {% else %}
+                    {% set flag = 0 %}
+                    {% for err in error_pay %}
+                        {% if err[0]  == {'SOURCE_ERROR': 0, 'BENEFICIARY_ERROR': 0, 'ERROR_CURRENCY': 0, 'AMOUNT_ERROR': 0} %}
+                        
+                        <p> {{ err[1] }}: OK</p>
+                        {% else %}
+                        {% set flag = 1 %}
+                        <p> {{ err[1] }}: NOK</p>
+                        {% endif %}
+                    {% endfor %}
+                    {% if flag == 1 %}
+                    <p>Errors in the table found. Please check the Currency, Sender or the recipient informations.</p>
+                    {% endif %}
+
+                    
+
+                </tbody> 
+                </thead>
+                </table>
+
+            {% endif %}
+            
+        
+        
+        </div>
         <div class="container-two" >
             <caption> History of transactions </caption> 
             <div class="table" >   
@@ -237,6 +241,16 @@
         
         
         
-
+        <script>
+            function limiterLignesTableau(tableauId, nombreMax) {
+                const tableau = document.getElementById(tableauId);
+                const lignes = tableau.getElementsByTagName('tr');
+                for (let i = nombreMax + 1; i < lignes.length; i++) {
+                    lignes[i].style.display = 'none';
+                }
+            }
+             // Limiter à 5 lignes (en-tête inclus)
+             limiterLignesTableau('histo', 15);
+        </script>
     </body>
 </html>

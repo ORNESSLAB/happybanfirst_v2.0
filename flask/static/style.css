@@ -1,7 +1,7 @@
 body {
 
 font-family: 'lato';
-background-color: #f0f0f0;
+background: radial-gradient(circle, #13000c 10%, #05001d 60%, #011f2b 100%);
 color: #333;
 margin: 0;
 padding: 0;
@@ -223,8 +223,8 @@ input[type="time"] {
     margin: 0 auto;
     width: 50%;
     padding: 2px;
-    background-color: #fcffff;
-    margin-top: 30px;
+    background-color: rgb(252, 255, 255);
+    margin-bottom: 20px;
     border-right: 1px solid rgb(228, 220, 220);
     border-left: 1px solid rgb(228, 220, 220);
     border-radius: 10px;
@@ -331,6 +331,8 @@ a:hover {
 p {
     font-size: x-small;
 }
-label {
+caption {
+    text-align: center;
     font-size: smaller
+    
 }

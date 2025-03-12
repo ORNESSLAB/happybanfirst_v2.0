@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Operation</title>
+        
+        <link rel="stylesheet" href="static/style.css">
+        <div class="head-div">
+            <h1>Connected as {{ user_id }}</h1>
+        </div>
+    </head>
+    <body>
+        
+        <div class="container">
+        <form method="POST">
+        <div class="form-group">
+        
+        <select id="choice" name="choice">
+            <option value="submit_payment">Effectuer un paiement</option>
+            <option value="check_wallets">Lister vos Wallets</option>
+            <option value="check_history">Historique des paiements</option>
+            <option value="create_external">Créer un Bénéficiaire</option>
+        </select>
+        </div>
+        <input type="submit" value="Valider">
+        </form>
+        </div>
+    </body>
+</html>

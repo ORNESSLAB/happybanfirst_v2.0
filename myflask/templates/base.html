@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orness-IbanFirst</title>
+        <!-- <link rel="stylesheet" href="static/style.css"> -->
+        <link rel="stylesheet" href="static/bulma.min.css" />
+        
+
+        <div class="head-div">
+            <h2></h2>
+        </div>
+</head>
+    <body>
+        <section class="hero is-black">
+            <!-- <section style="background-color: #13011a;"> -->
+            <div class="hero-body">
+                <nav class="navbar">
+                    <div class="container">
+                        <div id="navbarMenuHeroA" class="navbar-menu">
+                            <div class="navbar-end">
+                                <a id="home" href="{{ url_for('home') }}" class="navbar-item">
+                                    Home
+                                </a>
+                                <a id="profile" href="{{ url_for('profile') }}" class="navbar-item">
+                                    Profile
+                                </a>
+                                <a id="login" href="{{ url_for('login') }}" class="navbar-item">
+                                    Login
+                                </a>
+                                <a id="signup" href="{{ url_for('signup') }}" class="navbar-item">
+                                    Sign Up
+                                </a>
+                                <a  id="logout" href="{{ url_for('logout') }}" class="navbar-item">
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="hero-is-black">
+                <div   class="container has-text-centered" >
+                    {% block content %}
+                    {% endblock %}
+                </div>
+                    
+            </div>
+        </section>
+        
+
+    </body>

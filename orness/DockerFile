@@ -1,0 +1,3 @@
+# DockerFile
+# required: Redis, Flask, python3, pandas, pyyaml,jsonschema, openpyxl, country-converter, configparser
+

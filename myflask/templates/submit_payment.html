@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+        
+
+{% block content %}
+        <script>
+
+            const home = document.getElementById("home");
+            const login = document.getElementById("login");
+            const signup = document.getElementById("signup");
+            login.style.display = "none";
+            signup.style.display = "none";
+            
+            
+        </script>
+        
+
+        <div class='column is-4 is-offset-4'>
+            <div id="load_file" class="box"> 
+                
+                <form method="POST" id="upload" enctype="multipart/form-data" >
+                    <!-- <div class="file">
+                    <div class="file has-name is-left">
+                        <label class="file-label">
+                           
+                          <input class="file-input" type="file" name="file" id="pay_file" accept="xls*" />
+                          <span class="file-cta">
+                            <span class="file-icon">
+                              <i class="fas fa-upload"></i>
+                            </span>
+                            <span class="file-label"> Choose a file… </span>
+                          </span>
+                          <span class="file-name">Upload the excel file</span>
+                        </label>
+                      </div>
+                    </div> -->
+                    
+                    <div class="field">
+                        <label class="file-label" for="pay_file" ">Load an Excel table</label> <br>
+                        <div class="control is-black">
+                            <input class="input is-offset-4" type="file" name="file" id="pay_file" accept="xls*"; > </input>
+                        </div>
+                        
+                    </div>
+                
+                <button name="excel" class="button is-light" id="load" type="submit">Load</button>
+                </form>
+                
+            </div>
+        </div>
+        <script>
+            const load = document.getElementById("load");
+            load.addEventListener("click", (event) =>{
+                
+                load.classList.toggle("is-loading");
+                load.submit()
+                event.preventDefault();
+                    
+                
+
+            })
+           
+            ;
+        </script>
+
+       
+        
+            
+ {% endblock %}
+       

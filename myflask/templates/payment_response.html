@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+        
+
+{% block content %}
+<script>
+
+    const home = document.getElementById("home");
+    const login = document.getElementById("login");
+    const signup = document.getElementById("signup");
+    login.style.display = "none";
+    signup.style.display = "none";
+    
+</script>
+<div id="result" class="box">
+    <div class="column is-centered">
+        <div class="column is-narrow">
+            {% if payment %} 
+            <div id="div-r" class="table is-fullwidth">
+              <caption> Results </caption>
+              <table id="pay_table" class="table table-striped has-text-centered">
+                  <thead>
+                  <tr>
+                      <th>ID</th>
+                      <th>Sender</th>
+                      <th>Recipent</th>
+                      <th>Amount</th>
+                      
+                      <th>Creation Date</th>
+                      <th>Comment</th>
+                      <th>Execution Date</th>
+                      
+                      <!-- <th>Action</th> -->
+                  </tr>
+                  <tbody>
+                  {% for pay in payment %}
+                  <tr>
+                      <td>{{ pay['payment']['id'] }}</td>
+                      <td>{{ pay['payment']['sourceWalletId'] }}</td>
+                      <td>{{ pay['payment']['externalBankAccountId'] }}</td>
+                      <td>{{ pay['payment']['amount']['value'] }}  {{ pay['payment']['amount']['currency'] }}</td>
+      
+                      <td>{{ pay['payment']['createdDate'] }}</td>
+                      <td>{{ pay['payment']['communication'] }}</td>
+                      <td>{{ pay['payment']['desiredExecutionDate'] }}</td>
+      
+                  </tr>
+                     
+                  {% endfor %}
+                  {% else %}
+                  {% set flag = 0 %}
+                  {% for err in error_pay %}
+                      {% if err[0]  == {'SOURCE_ERROR': 0, 'BENEFICIARY_ERROR': 0, 'ERROR_CURRENCY': 0, 'AMOUNT_ERROR': 0} %}
+                          {% set flag = 0 %}
+                      {% else %}
+                      <p>Errors found in the sheet . Please check the Currency, Sender or the recipient informations.</p>
+                  
+                      {% endif %}
+                  {% endfor %}
+         
+              </tbody> 
+              </thead>
+              </table>
+      
+          </div>  
+          {% endif %}
+        </div>
+    </div>
+    <div style="position: fixed;">
+        <a class="button is-light" href="{{ url_for('submit_payment') }}">Return to load page</a>
+        <a class="button is-light" href="{{ url_for('history') }}">History of payments</a>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+
+

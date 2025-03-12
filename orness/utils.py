@@ -82,15 +82,33 @@ def read_data_from_file(filename):
     return myjson
 
 def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:str = "OUR") -> dict:
-    """
-    Given a list of options and a priority, return the feePaymentOption, feeValue and feeCurrency associated with the given priority.
-    Parameters:
-        options (list): list of options
-        priority (str): priority to look for
-    Returns:
-        dict: a dictionary containing the feePaymentOption, feeValue and feeCurrency associated with the given priority
-    """
+   
 
+    """
+    Retrieve fee and priority options from a list of payment options.
+
+    This function takes a list of payment options, a priority, and a fee payer as parameters.
+    It then filters the list of options to find the one that matches the given parameters,
+    and returns a dictionary containing the fee and priority options. If no matching option
+    is found, it returns an error code.
+
+    Parameters
+    ----------
+    options : list
+        A list of payment options.
+    priority : str, optional
+        The priority of the payment (default is '48H').
+    who_pays : str, optional
+        The fee payer (default is 'OUR').
+
+    Returns
+    -------
+    dict
+        A dictionary containing the fee and priority options
+    ERROR
+        An error code (default is NO_ERROR)
+    """
+    
     ERROR = errorExceptions.NO_ERROR
     option_returned = {}
     
@@ -113,6 +131,27 @@ def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:s
         
 def payload(excel_data_filename:str):
     #if we want to ask the user to select the priority option
+    """
+    Process payment data from an Excel file and prepare a payload for payment operations.
+
+    This function reads payment data from an Excel file, processes each entry to create 
+    a payment submission, and retrieves the necessary fee and priority options for each 
+    payment. It also handles errors encountered during processing.
+
+    Parameters
+    ----------
+    excel_data_filename : str
+        The path to the Excel file containing payment data to be processed.
+
+    Returns
+    -------
+    dict
+        A dictionary with two keys:
+        - 'payment': A list of successfully processed payment submissions.
+        - 'ERROR': A list of errors encountered, each associated with the line number 
+          in the Excel file.
+    """
+
     payload_returned = {"payment":[], "ERROR":[]}
     line = 0
     json_data_from_excel = read_data_from_file(excel_data_filename)
@@ -178,6 +217,17 @@ def payload_dict(data:dict):
     return payment_submit
 
 def walletload(excel_data_filename: str) -> list:
+    """
+    Read the excel file and for each line, call the mapping_wallets_submit function to construct the wallet JSON body.
+    If there is an error in the file, return the list of errors
+    If there is no error, return the list of wallet JSON bodies
+    
+    Parameters:
+        excel_data_filename (str): the filename of the excel file to read
+    
+    Returns:
+        list: a list of wallet JSON bodies
+    """
     return [
         walletdump for data in read_data_from_file(excel_data_filename)
         if mappings.valid(
@@ -188,6 +238,23 @@ def walletload(excel_data_filename: str) -> list:
 
 def post_payment(excel_data_filename: str) -> list:
 
+    """
+    Read the excel file and for each line, call the payload function to construct the payment JSON body.
+    If there is an error in the file, return the list of errors
+    If there is no error, call the post payment API for each payment and return the list of response
+    
+    Parameters
+    ----------
+    excel_data_filename : str
+        The path of the excel file containing the payments to be done
+        
+    Returns
+    -------
+    list
+        A list of payments response
+    list
+        A list of errors
+    """
     load_pay = payload(excel_data_filename)
     payment_sub = load_pay['payment']
     error = load_pay['ERROR']
@@ -256,7 +323,7 @@ def create_wallets(excel_data_filename: str) -> list:
     try:
         wallets = walletload(excel_data_filename)
         for wallet in wallets:
-            logger.debug(f"Create wallet {lwallet}")
+            logger.debug(f"Create wallet {wallet}")
             api = IbWalletApi()
             api.wallets_post(wallet=wallet)
     except ApiException as e:
@@ -286,11 +353,9 @@ def check_if_wallet_exist(wallet_id: str) -> bool:
         :param wallet_id: The id of the wallet to check
         :return: True if the wallet exists, False otherwise
         """
-        try:
-            return any(i['id'] == wallet_id for i in rd.get('wallets_info'))
-        except ApiException as e:
-            if e.status == 404:
-                return False
+        
+        return any(i['id'] == wallet_id for i in rd.get('wallets_info'))
+        
             
 
 def check_if_external_bank_account_exist(external_bank_account_id) -> bool:
@@ -300,8 +365,9 @@ def check_if_external_bank_account_exist(external_bank_account_id) -> bool:
     :param external_bank_account_id: The ID of the external bank account to check.
     :return: True if the external bank account exists, False otherwise.
     """
-    api = IbExternalBankAccountApi()
+    
     try:
+        api = IbExternalBankAccountApi()
         return any(i['id'] == external_bank_account_id for i in rd.get('external_bank_accounts_info'))
     except ApiException as e:
         if e.status == 404: 
@@ -309,6 +375,12 @@ def check_if_external_bank_account_exist(external_bank_account_id) -> bool:
         
     
 def get_payments_status(status="all"):
+    """
+    Retrieve the list of payments by status.
+
+    :param status: The status of payments you want to retrieve. If not provided, it will retrieve all payments.
+    :return: A JSON object containing a list of payments matching the given status.
+    """
     logging.info("Get payments by status")
     try:
         api = IbPaymentsApi()
@@ -342,23 +414,19 @@ def get_external_bank_account_id(id):
 
 def get_wallet_holder_info():
     logging.debug("Get holder info ")
-    try:
-        list_of_wallet_by_id = [{"id": i['id'], 
-                                 "amountValue": i["bookingAmount"]["value"], 
-                                 'amountCurrency': i["bookingAmount"]["currency"]} for i in get_wallets()['wallets'] ]
-        list_of_wallet_info = [{'id': i['id'], 
-                    'holderName': get_wallet_id(id=i['id'])['wallet']['holder']['name'], 
-                    'holderIBAN': get_wallet_id(id=i['id'])['wallet']['accountNumber'], 
-                    'holderBankBic': get_wallet_id(id=i['id'])['wallet']['holderBank']['bic'], 
-                    "amountValue": i["amountValue"], 'amountCurrency': i["amountCurrency"] } for i in list_of_wallet_by_id]
-       
-
-        
-        return list_of_wallet_info  
-    except TypeError:
-        logger.error("User not found")
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+    
+    list_of_wallet_by_id = [{"id": i['id'], 
+                             "amountValue": i["bookingAmount"]["value"], 
+                             'amountCurrency': i["bookingAmount"]["currency"]} for i in get_wallets()['wallets'] ]
+    list_of_wallet_info = [{'id': i['id'], 
+                'holderName': get_wallet_id(id=i['id'])['wallet']['holder']['name'], 
+                'holderIBAN': get_wallet_id(id=i['id'])['wallet']['accountNumber'], 
+                'holderBankBic': get_wallet_id(id=i['id'])['wallet']['holderBank']['bic'], 
+                "amountValue": i["amountValue"], 'amountCurrency': i["amountCurrency"] } for i in list_of_wallet_by_id]
+    
+    
+    return list_of_wallet_info  
+    
 
 def get_external_bank_accounts():
     logger.debug("Get external bank accounts")
@@ -371,15 +439,12 @@ def get_external_bank_accounts():
 
 def get_external_bank_account_info():
     logger.debug("Get external bank BICs")
-    try:
-        accounts = get_external_bank_accounts()
-        
-        list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber'], 'currency': acc['currency']} for acc in accounts['accounts']]
-        return list_info
-    except TypeError:
-        logger.error("User not found")
-    except ApiException as e:
-        logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+    
+    accounts = get_external_bank_accounts()
+    
+    list_info = [{'id': acc['id'], 'holderName': acc['holder']['name'], 'holderBankBic': acc['holderBank']['bic'], 'holderIBAN': acc['accountNumber'], 'currency': acc['currency']} for acc in accounts['accounts']]
+    return list_info
+    
         
 
 def confirm_paymet(id):
@@ -393,10 +458,8 @@ def delete_paymet(id):
     return api.payments_id_delete(id=id)
 
 def modify_env(key, value):
-    variables = dotenv_values('.env')
-    variables[key] = value
-    for k, v in variables.items():
-        set_key('.env', k, v)
+    os.environ[key] = value
+    
 
 def authentication(user_id, password):
     try:

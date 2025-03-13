@@ -1,28 +1,34 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Operation</title>
-        
-        <link rel="stylesheet" href="static/style.css">
-        <div class="head-div">
-            <h1>Connected as {{ user_id }}</h1>
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+
+    
+    const login = document.getElementById("login");
+    const signup = document.getElementById("signup");
+    login.style.display = "none";
+    signup.style.display = "none";
+    
+    
+</script>
+
+<div class="container is-offset-4 is-4">
+    <form method="POST">
+        <div class="box">
+            <div class="select is-rounded">
+                <select  id="choice" name="choice">
+                    <option value="submit_payment">Effectuer un paiement</option>
+                    <option value="check_wallets">Lister vos Wallets</option>
+                    <option value="check_history">Historique des paiements</option>
+                    <option value="create_external">Créer un Bénéficiaire</option>
+                </select>
+                <input class="button is-primary" type="submit" value="Valider">
+            </div>
+            
         </div>
-    </head>
-    <body>
         
-        <div class="container">
-        <form method="POST">
-        <div class="form-group">
-        
-        <select id="choice" name="choice">
-            <option value="submit_payment">Effectuer un paiement</option>
-            <option value="check_wallets">Lister vos Wallets</option>
-            <option value="check_history">Historique des paiements</option>
-            <option value="create_external">Créer un Bénéficiaire</option>
-        </select>
-        </div>
-        <input type="submit" value="Valider">
-        </form>
-        </div>
-    </body>
-</html>
+    </form>
+</div>
+{% endblock content %}
+ 

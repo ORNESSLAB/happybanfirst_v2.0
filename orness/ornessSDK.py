@@ -11,7 +11,8 @@ from ibanfirst_client.api.external_bank_account_api import ExternalBankAccountAp
 from ibanfirst_client.api.financial_movements_api import FinancialMovementsApi
 from ibanfirst_client.rest import ApiException
 from orness.config import Config
-from orness import error_exception, mappings
+from orness.auth import Authentication
+from orness import error_exception
 from orness import error_exception as errorExceptions
 
 
@@ -201,19 +202,24 @@ class Mapping():
         
     
 class OrnessSDK:
-    def __init__(self, username, password):
+    def __init__(self):
         self.config = Config()
-        self.config.username = username
-        self.config.password = password
-        print(generate_api_with_default_header(self.config).default_headers)
-    
-    def login():
-        pass
+        self.auth = None
 
+    def login(self, username, password):
+        self.auth = Authentication(username=username, password=password)
+        
+    
+    def api_client(self):
+        api_client = ApiClient(configuration=self.config)
+        api_client.default_headers = self.auth.header()
+        return api_client
+    
+  
 
     def get_wallets(self):
         try:
-            api_client = generate_api_with_default_header(self.config)
+            api_client = self.api_client()
             wallets_api = WalletsApi(api_client)
             return wallets_api.wallets_get(_preload_content=False).json()['wallets']
         except ApiException as e:
@@ -221,17 +227,16 @@ class OrnessSDK:
 
     def get_wallet_by_id(self, wallet_id):
         try:
-            api_client = generate_api_with_default_header(self.config)
+            api_client = self.api_client()
             wallet_api = WalletsApi(api_client)
             return wallet_api.wallets_id_get(id=wallet_id, _preload_content=False).json()['wallet']
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
 
-
-    def get_payments(self, status):
+    def get_payments_status(self, status):
         try:
-            api_client = generate_api_with_default_header(self.config)
-            payments_api = PaymentsApi(self.api_client)
+            api_client = self.api_client()
+            payments_api = PaymentsApi(api_client)
             return payments_api.payments_status_get(status=status, _preload_content=False).json()
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
@@ -324,7 +329,7 @@ class OrnessSDK:
                 if isinstance(val, dict):
 
                     try:
-                        api_client = generate_api_with_default_header(self.config)
+                        api_client = self.api_client()
                         payments_api = PaymentsApi(api_client)
                         post_payment_response.append(payments_api.payments_post(body=val, _preload_content=False).json())         
                     except ApiException as e:
@@ -333,7 +338,7 @@ class OrnessSDK:
     
     def retreive_option_list(self, external_id:str, wallet_id:str):
         try:
-            api_client = generate_api_with_default_header(self.config)
+            api_client = self.api_client()
             payments_api = PaymentsApi(api_client)
             if self.check_if_external_bank_account_exist(external_bank_account_id=external_id) and self.check_if_wallet_exist(wallet_id=wallet_id):
                 return payments_api.payments_options_wallet_id_external_bank_account_id_get(external_bank_account_id=external_id, wallet_id=wallet_id, _preload_content=False).json()['paymentOption']['options']
@@ -364,7 +369,7 @@ class OrnessSDK:
     
     def get_external_bank_account_by_id(self, external_id):
         try:
-            api_client = generate_api_with_default_header(self.config)
+            api_client = self.api_client()
         
             external_bank_account_api = ExternalBankAccountApi(api_client)
             return external_bank_account_api.external_bank_accounts_id_get(id=external_id, _preload_content=False).json()['account']
@@ -374,11 +379,12 @@ class OrnessSDK:
         
     def get_external_bank_accounts(self):
         try:
-            api_client = generate_api_with_default_header(self.config)
+            api_client = self.api_client()
             external_bank_account_api = ExternalBankAccountApi(api_client)
             return external_bank_account_api.external_bank_accounts_get(_preload_content=False).json()['accounts']
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
+
     
     def get_external_bank_account_info(self):
         accounts = self.get_external_bank_accounts()
@@ -515,10 +521,14 @@ if __name__ == "__main__":
     from pprint import pprint
     
     file = "new_payments_v2.xlsx"
-    sdk = OrnessSDK(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
-    pprint(sdk.post_payment(file))
+    sdk = OrnessSDK()
+    sdk.login(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
+    pprint(sdk.auth.header())
+    pprint(sdk.auth.header())
+    #pprint(sdk.post_payment(file))
+    # pprint(sdk.get_payments_status('all'))
     #pprint(sdk.get_wallets_holder_info())
-    # pprint(sdk.get_external_bank_account_info())
+    pprint(type(sdk.get_external_bank_account_info()))
     #pprint(sdk.get_external_bank_account_by_id(""))
     #pprint(sdk.check_if_external_bank_account_exist("MTc3Njcy"))
 

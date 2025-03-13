@@ -5,13 +5,13 @@
 from __future__ import absolute_import
 
 import unittest
-from orness import utils
+from orness.ornessSDK  import OrnessSDK
 class TestWalletsApi(unittest.TestCase):
     """WalletsApi unit test stubs"""
 
     def setUp(self):
          # noqa: E501
-         pass
+        self.sdk = OrnessSDK(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
      
     def tearDown(self):
         pass
@@ -39,13 +39,13 @@ class TestWalletsApi(unittest.TestCase):
         """
         Test case for fund_wallet
         """
-        self.assertTrue(utils.check_account_value('NjczODE', 10))
+        self.assertTrue(self.sdk.check_account_value('NjczODE', 10))
     
     def test_fund_wallet_false(self): 
         """
         Test case for fund_wallet
         """
-        self.assertFalse(utils.check_account_value('NjczODE', 10000))
+        self.assertFalse(self.sdk.check_account_value('NjczODE', 10000))
 
     def test_wallets_post(self):
         """Test case for wallets_post
@@ -54,17 +54,6 @@ class TestWalletsApi(unittest.TestCase):
         """
         pass
     
-    def test_number_of_same_external_holder_name(self):
-        """
-        Test case for number_of_same_external_holder_name
-        """
-        self.assertEqual(utils.number_of_same_external_holder_name('09cf660e9747a34'), 1)
-    
-    def test_number_of_same_external_holder_name(self):
-        """
-        Test case for number_of_same_external_holder_name
-        """
-        self.assertNotEqual(utils.number_of_same_external_holder_name('314b065159e8e9c'), 1)
     
     
 

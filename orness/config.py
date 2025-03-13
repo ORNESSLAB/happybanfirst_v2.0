@@ -30,6 +30,7 @@ class Config(Conf):
         Constructor for the class. It sets the variables from the environment variables.
         
         """
+        
         #self.config = get_config()
         super().__init__()
         #self.host = self.config['DEFAULT']['host']
@@ -49,7 +50,7 @@ class Config(Conf):
         """
         
         try:
-            header = IBanFirst(user_id=os.getenv('IB_USERNAME') , password=os.getenv('IB_PASSWORD')).generate_header()
+            header = IBanFirst(user_id=self.username, password=self.password).generate_header()
             #header = IBanFirst(user_id=rd.get('user_id').decode('utf-8') , password=rd.get('password').decode('utf-8')).generate_header()
             header['User-Agent'] = "Orness/1.0.0/python"
             return header

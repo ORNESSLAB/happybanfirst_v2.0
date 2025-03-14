@@ -38,25 +38,25 @@ class Config(Conf):
         print(self.host)
         logger.debug("Connected on: {} as {}".format(self.host, os.getenv('IB_USERNAME')))
               
-    def get_header(self):
-        """
-        Retrieve the authentication header for iBanFirst API requests.
+    # def get_header(self):
+    #     """
+    #     Retrieve the authentication header for iBanFirst API requests.
 
-        This method generates a WSSE header using the username and password
-        stored in environment variables. The header is used to authenticate
-        requests to the iBanFirst API.
+    #     This method generates a WSSE header using the username and password
+    #     stored in environment variables. The header is used to authenticate
+    #     requests to the iBanFirst API.
 
-        :return: A dictionary containing the WSSE header.
-        """
+    #     :return: A dictionary containing the WSSE header.
+    #     """
         
-        try:
-            header = IBanFirst(user_id=self.username, password=self.password).generate_header()
-            #header = IBanFirst(user_id=rd.get('user_id').decode('utf-8') , password=rd.get('password').decode('utf-8')).generate_header()
-            header['User-Agent'] = "Orness/1.0.0/python"
-            return header
-        except ApiException as e:
-            logger.error(pprint.pprint(e.reason))
-        #return IBanFirst(user_id=self.username, password=self.password).generate_header()
+    #     try:
+    #         header = IBanFirst(user_id=self.username, password=self.password).generate_header()
+    #         #header = IBanFirst(user_id=rd.get('user_id').decode('utf-8') , password=rd.get('password').decode('utf-8')).generate_header()
+    #         header['User-Agent'] = "Orness/1.0.0/python"
+    #         return header
+    #     except ApiException as e:
+    #         logger.error(pprint.pprint(e.reason))
+    #     #return IBanFirst(user_id=self.username, password=self.password).generate_header()
 
 
 

@@ -21,14 +21,43 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Mapping():
-    """_summary_
-
-    Parameters
+    """
+    Mapping class for handling wallet and beneficiary information.
+    
+    This class provides methods to manage wallets and beneficiaries, including
+    calculating maximum wallet values, counting accounts with the same holder name,
+    and selecting appropriate wallets and beneficiaries for payment submissions.
+    
+    Attributes
     ----------
-    wallet_list : _type_
-        _description_
-    beneficiary : _type_
-        _description_
+    wallets : list
+        A list of wallet dictionaries containing wallet information.
+    beneficiary : list
+        A list of beneficiary dictionaries containing beneficiary information.
+    recip_iban : str
+        The key for recipient IBAN in the data dictionary.
+    send_iban : str
+        The key for sender IBAN in the data dictionary.
+    
+    Methods
+    -------
+    max_value() -> float
+        Returns the maximum value among the wallets.
+    
+    number_of_same_object_holder_name(holder_name: str, objet: str) -> int
+        Counts the number of accounts with the same holder name.
+    
+    number_object_with_same_iban(iban: str, objet: str) -> int
+        Counts the number of accounts with the same IBAN.
+    
+    choose_the_wallet(data: dict) -> tuple
+        Selects the appropriate wallet based on the provided data.
+    
+    choose_beneficiary(data: dict) -> tuple
+        Selects the appropriate beneficiary based on the provided data.
+    
+    mapping_payment_submit_v2(data: dict) -> tuple
+        Prepares the payment submission data based on the provided information.
     """
     def __init__(self, wallet_list, beneficiary):
         
@@ -83,6 +112,28 @@ class Mapping():
             return 0
 
     def choose_the_wallet(self,data):
+        """
+        Choose the appropriate wallet based on the provided data.
+        
+        This method evaluates the input data to determine which wallet to select based on the sender's information and the provided IBAN. 
+        It checks various conditions to ensure that the wallet can be accessed and that there are sufficient funds available.
+        
+        Args:
+            data (dict): A dictionary containing the transaction details. 
+        
+        Returns:
+            tuple: A tuple containing:
+                - source_Id (list): A list of tuples with wallet details (id, amountCurrency, amountValue) if a wallet is found, otherwise an empty list.
+                - ERROR (int): An error code indicating the status of the operation. Possible values include:
+                    - error_exception.NO_ERROR: No error occurred.
+                    - error_exception.SENDER_IBAN_NOT_PROVIDED: Sender IBAN not provided when multiple wallets exist.
+                    - error_exception.TOO_MUCH_SENDER_IBAN_FOUND: More than one wallet found for the given sender.
+                    - error_exception.NOT_ENOUGH_FUND: Insufficient funds in the selected wallet.
+                    - error_exception.SENDER_NOT_RETREIVED: Sender not retrieved based on the provided information.
+        
+        Raises:
+            None: This function does not raise exceptions but returns error codes instead.
+        """
         
         ERROR = error_exception.NO_ERROR
         source_Id=[]
@@ -133,6 +184,24 @@ class Mapping():
             return source_Id, ERROR
 
     def choose_beneficiary(self,data):
+        """Choose a beneficiary based on the provided data.
+        
+        This method checks the recipient's IBAN and name to determine the appropriate beneficiary. 
+        It handles various scenarios where either or both the IBAN and recipient name are provided, 
+        and returns a list of beneficiaries along with any relevant error messages.
+        
+        Args:
+            data (dict): A dictionary containing the recipient's IBAN and name. 
+                         Expected keys are 'Recipient Name' and the IBAN key defined by self.recip_iban.
+        
+        Returns:
+            tuple: A tuple containing:
+                - benef (list): A list of tuples where each tuple contains the beneficiary's ID and currency.
+                - ERROR (str): An error message if applicable, otherwise None.
+                
+        Raises:
+            None: This function does not raise exceptions but returns error messages as needed.
+        """
         ERROR = error_exception.NO_ERROR
         benef = []
         if not data[self.recip_iban] and not data['Recipient']:
@@ -161,12 +230,38 @@ class Mapping():
 
     
     def mapping_payment_submit_v2(self, data:dict) -> dict:
+        """Mapping Payment Submit Version 2.
+        
+        This method processes payment submission by selecting the beneficiary and wallet based on the provided data. 
+        It validates the necessary fields and constructs a payment submission dictionary, returning it along with any errors encountered during the process.
+        
+        Args:
+            data (dict): A dictionary containing payment details, including:
+                - Sender Name (str): The name of the sender.
+                - Sender IBAN (str): The IBAN of the sender.
+                - Recipient (str): The name of the recipient.
+                - Recipient IBAN (str): The IBAN of the recipient.
+                - Amount (float): The amount to be transferred.
+                - Currency (str): The currency of the transaction.
+                - Execution date (str): The date when the payment should be executed.
+                - Priority (str, optional): The priority of the payment (e.g., '24H').
+                - Fees option (str, optional): The option for handling fees (e.g., 'CLIENT', 'recipient', 'share').
+                - Description (str, optional): A description of the payment.
+                - Comment (str, optional): Any additional comments regarding the payment.
+        
+        Returns:
+            tuple: A tuple containing:
+                - payment_submit (dict): A dictionary with the constructed payment submission details.
+                - errors (dict): A dictionary containing any errors encountered, with keys:
+                    - SOURCE_ERROR: Error related to the source wallet.
+                    - BENEFICIARY_ERROR: Error related to the beneficiary.
+                    - ERROR_CURRENCY: Error related to currency mismatches.
+                    - AMOUNT_ERROR: Error indicating if the amount was not provided.
+        
+        Raises:
+            ValueError: If the amount is not provided or if there is a currency mismatch between the sender and beneficiary.
+        """
         payment_submit = {}
-        #TODO: check the amount currency
-        #TODO: check wallet holder name
-        #TODO: check beneficiary holder name
-        #TODO: return error value
-
         
         external_Id, BENEFICIARY_ERROR = self.choose_beneficiary(data)
         source_Id, SOURCE_ERROR = self.choose_the_wallet(data=data)
@@ -202,6 +297,65 @@ class Mapping():
         
     
 class OrnessSDK:
+    """
+    OrnessSDK is a class that provides methods for processing payments through an external API. 
+    It handles reading payment data from an Excel file, validating the data, and submitting payment requests while managing errors.
+    
+    Attributes
+    ----------
+    - payment: A list of successfully processed payment submissions.
+    - ERROR: A list of errors encountered, each associated with the line number in the Excel file.
+    
+    Methods
+    -------
+    - post_payment(excel_data_filename: str) -> tuple:
+        Reads the Excel file and processes payments, returning a list of payment responses and errors.
+        
+    - retreive_option_list(external_id: str, wallet_id: str):
+        Retrieves a list of payment options for a given external bank account and wallet ID.
+        
+    - check_if_wallet_exist(wallet_id: str) -> bool:
+        Checks if a wallet exists based on its ID.
+        
+    - check_if_external_bank_account_exist(external_bank_account_id: str) -> bool:
+        Checks if an external bank account exists based on its ID.
+        
+    - get_wallets_holder_info() -> list:
+        Retrieves information about wallet holders, including their IDs and balances.
+        
+    - get_external_bank_account_by_id(external_id: str):
+        Retrieves details of an external bank account by its ID.
+        
+    - get_external_bank_accounts() -> list:
+        Retrieves a list of all external bank accounts.
+        
+    - get_external_bank_account_info() -> list:
+        Retrieves detailed information about external bank accounts.
+        
+    - check_account_value(wallet_id: str, amount: float) -> bool:
+        Checks if a specified wallet has enough funds to cover a payment amount.
+    
+        Process payment data from an Excel file and prepare a payload for payment operations.
+    
+        This function reads payment data from an Excel file, processes each entry to create 
+        a payment submission, and retrieves the necessary fee and priority options for each 
+        payment. It also handles errors encountered during processing.
+    
+        Parameters
+        ----------
+        excel_data_filename : str
+            The path to the Excel file containing payment data to be processed.
+    
+        Returns
+        -------
+        dict
+            A dictionary with two keys:
+            - 'payment': A list of successfully processed payment submissions.
+            - 'ERROR': A list of errors encountered, each associated with the line number 
+              in the Excel file.
+        """
+    
+    
     def __init__(self):
         self.config = Config()
         self.auth = None
@@ -240,8 +394,6 @@ class OrnessSDK:
             return payments_api.payments_status_get(status=status, _preload_content=False).json()
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
-
-    
 
     
     def payload(self, excel_data_filename:str):
@@ -346,57 +498,14 @@ class OrnessSDK:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
     
     def check_if_wallet_exist(self, wallet_id):
-        return True if self.get_wallet_by_id(wallet_id=wallet_id) else False
-    
-    
-    def check_if_external_bank_account_exist(self, external_bank_account_id):
+        """Checks if a wallet exists based on the provided wallet ID.
         
-        return True if self.get_external_bank_account_by_id(external_id=external_bank_account_id) else False
-    
-
-    def get_wallets_holder_info(self):
-        list_of_wallet_by_id = [{"id": i['id'], 
-                                 "amountValue": i["bookingAmount"]["value"], 
-                                 'amountCurrency': i["bookingAmount"]["currency"]} for i in self.get_wallets()]
-        list_of_wallet_info = [{'id': i['id'], 
-                    'holderName': self.get_wallet_by_id(wallet_id=i['id'])['holder']['name'], 
-                    'holderIBAN': self.get_wallet_by_id(wallet_id=i['id'])['accountNumber'], 
-                    'holderBankBic': self.get_wallet_by_id(wallet_id=i['id'])['holderBank']['bic'], 
-                    "amountValue": i["amountValue"], 'amountCurrency': i["amountCurrency"] } for i in list_of_wallet_by_id]
-
-
-        return list_of_wallet_info  
-    
-    def get_external_bank_account_by_id(self, external_id):
-        try:
-            api_client = self.api_client()
+        Args:
+            wallet_id (str): The unique identifier of the wallet to check.
         
-            external_bank_account_api = ExternalBankAccountApi(api_client)
-            return external_bank_account_api.external_bank_accounts_id_get(id=external_id, _preload_content=False).json()['account']
-        except ApiException as e:
-            logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
-
+        Returns:
+            bool: True if the wallet exists, False otherwise.
         
-    def get_external_bank_accounts(self):
-        try:
-            api_client = self.api_client()
-            external_bank_account_api = ExternalBankAccountApi(api_client)
-            return external_bank_account_api.external_bank_accounts_get(_preload_content=False).json()['accounts']
-        except ApiException as e:
-            logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
-
-    
-    def get_external_bank_account_info(self):
-        accounts = self.get_external_bank_accounts()
-        list_info = [{'id': acc['id'], 
-                      'holderName': acc['holder']['name'], 
-                      'holderBankBic': acc['holderBank']['bic'], 
-                      'holderIBAN': acc['accountNumber'], 
-                      'currency': acc['currency']} for acc in accounts]
-        return list_info
-   
-    def check_account_value(self,wallet_id: str, amount:float) -> bool:
-        """
         Check if the wallet has enough money to make the payment.
 
         :param wallet_id: The id of the wallet
@@ -406,25 +515,6 @@ class OrnessSDK:
         
         return any(i['id'] == wallet_id and float(i['amountValue']) >= amount for i in self.get_wallets_holder_info())
     
-    
-
-def generate_api_with_default_header(conf):
-    """
-    Creates an ApiClient instance with a default header.
-
-    This function initializes an ApiClient instance with configuration
-    settings from the Config class. It then retrieves the header from the
-    configuration and sets the 'X-WSSE' header for the ApiClient. Finally,
-    it returns the configured ApiClient instance.
-
-    :return: An ApiClient instance with the 'X-WSSE' header set.
-    :rtype: ApiClient
-    """
-
-    API = ApiClient(configuration=conf)
-    header = API.configuration.get_header()
-    API.set_default_header('X-WSSE', header['X-WSSE'])
-    return API
 
 def read_data_from_file(filename):
     """
@@ -516,6 +606,10 @@ def date_format(date):
         return input_date.strftime('%Y-%m-%d')  # Return future date as is
     else:
         return datetime.now().strftime('%Y-%m-%d')  # Return today's date
+
+
+
+
 
 if __name__ == "__main__":
     from pprint import pprint

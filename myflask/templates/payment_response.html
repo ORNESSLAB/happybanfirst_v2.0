@@ -65,11 +65,19 @@
           {% endif %}
         </div>
     </div>
-    <div style="position: fixed;">
-        <a class="button is-light" href="{{ url_for('submit_payment') }}">Return to load page</a>
-        <a class="button is-light" href="{{ url_for('history') }}">History of payments</a>
+    <div class="columns is-transparent mt-1">
+    
+        <div class="column ">
+            <a class="button is-left" href="{{ url_for('submit_payment') }}">Return to load page</a>
+        </div>
+        <div class="column">
+            <a class="button is-right is-col-from-end-2" href="{{ url_for('history') }}">History of payments</a>
+        </div> 
     </div>
+    
 </div>
+
+
 
 
 {% endblock %}

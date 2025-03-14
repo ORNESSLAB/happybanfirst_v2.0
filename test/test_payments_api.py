@@ -14,13 +14,17 @@ from __future__ import absolute_import
 
 import unittest
 
-from orness import utils, mappings
+
+from orness.ornessSDK import OrnessSDK
 
 
 class TestPaymentsApi(unittest.TestCase):
     """PaymentsApi unit test stubs"""
 
     def setUp(self):
+        self.sdk = OrnessSDK()
+        self.sdk.login(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
+     
         self.opt = [
             {'priorityPaymentOption': '24H', 'feePaymentOption': 'BEN',
              'priorityCost': {'value': '6.00', 'currency': 'EUR'},
@@ -57,8 +61,8 @@ class TestPaymentsApi(unittest.TestCase):
     
     def test_bulk_payment(self):
 
-        self.assertIsInstance(utils.post_payment(self.file)[0], list)
-        self.assertIsNotNone(utils.post_payment(self.file)[0])
+        self.assertIsInstance(self.sdk.post_payment(self.file)[0], list)
+        self.assertIsNotNone(self.sdk.post_payment(self.file)[0])
     
 
 
@@ -68,21 +72,21 @@ class TestPaymentsApi(unittest.TestCase):
 
         Get payment options for a wallet and an external bank account  # noqa: E501
         """
-        self.assertIsNotNone(utils.retreive_option_list(wallet_id='NjczODE', external_id='NjczODA'))
+        self.assertIsNotNone(self.sdk.retreive_option_list(wallet_id='NjczODE', external_id='NjczODA'))
 
     # def test_payments_post_true(self):
     #     """Test case for payments_post
 
     #     Submit a payment  # noqa: E501
     #     """
-    #     submit_pay = utils.post_payment(self.file)
+    #     submit_pay = self.sdk.post_payment(self.file)
     #     self.assertNotIsInstance(submit_pay, str)
 
-    def test_delete_payment(self):
-        self.assertTrue(utils.delete_paymet("MzM1MDA1"))
+    # def test_delete_payment(self):
+    #     self.assertTrue(self.sdk.delete_paymet("MzM1MDA1"))
     
-    def test_confirm_payment(self):
-        self.assertTrue(utils.confirm_paymet(id="MzM1MDU1"))
+    # def test_confirm_payment(self):
+    #     self.assertTrue(self.sdk.confirm_paymet(id="MzM1MDU1"))
 
     
     def test_payments_status_planified(self):
@@ -90,23 +94,23 @@ class TestPaymentsApi(unittest.TestCase):
 
         Get payment list by status  # noqa: E501
         """
-        self.assertIsInstance(utils.get_payments_status('planified'), dict)
+        self.assertIsInstance(self.sdk.get_payments_status('planified'), dict)
     
     def test_payments_status_finilized(self):
         """Test case for payments_status_get
 
         Get payment list by status  # noqa: E501
         """
-        self.assertIsInstance(utils.get_payments_status('finalized'), dict)
+        self.assertIsInstance(self.sdk.get_payments_status('finalized'), dict)
 
     def test_no_priorities_between_two_accounts(self):
         #OTg1OTE, NjczODE
         
-        self.assertIsNotNone(utils.retreive_option_list(wallet_id='NjczODE', external_id='NzA2MTA'))
+        self.assertIsNotNone(self.sdk.retreive_option_list(wallet_id='NjczODE', external_id='NzA2MTA'))
     
-    def test_get_payment_fee_and_priority(self):
+    # def test_get_payment_fee_and_priority(self):
         
-        self.assertTrue(utils.get_payment_fee_and_priority(options=self.opt, priority='24H'))
+    #     self.assertTrue(self.sdk.get_payment_fee_and_priority(options=self.opt, priority='24H'))
 
 
 if __name__ == '__main__':

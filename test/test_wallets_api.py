@@ -11,7 +11,8 @@ class TestWalletsApi(unittest.TestCase):
 
     def setUp(self):
          # noqa: E501
-        self.sdk = OrnessSDK(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
+        self.sdk = OrnessSDK()
+        self.sdk.login(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
      
     def tearDown(self):
         pass
@@ -59,4 +60,4 @@ class TestWalletsApi(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

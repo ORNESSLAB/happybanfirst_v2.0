@@ -239,21 +239,5 @@ class OrnessSDK:
         return any(i['id'] == wallet_id and float(i['amountValue']) >= amount for i in self.get_wallets_holder_info())
     
   
-
-if __name__ == "__main__":
-    from pprint import pprint
-    
-    file = "new_payments_v2.xlsx"
-    sdk = OrnessSDK()
-    sdk.login(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
-    pprint(sdk.auth.header())
-    pprint(sdk.auth.header())
-    #pprint(sdk.post_payment(file))
-    # pprint(sdk.get_payments_status('all'))
-    #pprint(sdk.get_wallets_holder_info())
-    pprint(type(sdk.get_external_bank_account_info()))
-    #pprint(sdk.get_external_bank_account_by_id(""))
-    #pprint(sdk.check_if_external_bank_account_exist("MTc3Njcy"))
-
     
     

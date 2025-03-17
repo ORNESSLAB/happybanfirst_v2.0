@@ -36,6 +36,10 @@ class TestWalletsApi(unittest.TestCase):
 
         Get wallet details  # noqa: E501
         """
+        wallet = self.sdk.get_wallets_holder_info()
+        self.assertIsInstance(wallet, list)
+        self.assertIsNotNone(wallet)
+        
     def test_fund_wallet(self): 
         """
         Test case for fund_wallet

@@ -9,9 +9,6 @@ import logging
 from orness.cache import RedisCache 
 
 rd = RedisCache()
-extern  = None
-pay_history = None
-wallets = None
 
 
 
@@ -35,13 +32,13 @@ def login():
 
             if 'login' in request.form:
                 sdk.login(username=session['username'], password=session['password'])
-                app.logger.debug(f'Header:  {sdk.auth.header()}')
-                global extern, pay_history, wallets
+                app.logger.debug(f'Connection Successfull')
                 assert isinstance(sdk.get_external_bank_account_info(), list), "Connexion Failed"
+                app.logger.debug("load account info")
                 rd.set('external_bank_accounts_info', json.dumps(sdk.get_external_bank_account_info()))
                 rd.set('payments_histo', json.dumps(sdk.get_payments_status("all")['payments']))
                 rd.set('wallets_info', json.dumps(sdk.get_wallets_holder_info()))
-                
+                app.logger.debug(f'Header:  {sdk.auth.header()}')
                 return redirect(url_for("operation"))
                 
         else:
@@ -66,6 +63,7 @@ def operation(user_id=None):
             user_id = session['username']
             choice = request.form.get("choice")
             if choice == "submit_payment":
+                app.logger.debug(f'choice past: {choice}')
                 return redirect(url_for("submit_payment"))
             if choice == "check_wallet":
                 return redirect(url_for("check_wallet"))
@@ -84,13 +82,16 @@ def operation(user_id=None):
 def submit_payment():
     
     data = {}
-    len_extern = 0
+    
     list_exteriban = ""
     try:
         if "username" in session:
-            pay_history = list(reversed(json.loads(rd.get('payments_histo'))))
-            wallets = json.loads(rd.get('wallets_info'))
-            extern = json.loads(rd.get('external_bank_accounts_info'))
+            app.logger.debug(f'username: {session["username"]}')
+            app.logger.debug(f'wallet: {rd.get('wallets_info')}')
+            pay_history = list(reversed(rd.get('payments_histo')))
+            wallets = rd.get('wallets_info')
+            extern = rd.get('external_bank_accounts_info')
+            app.logger.debug(f'wallets: {wallets}')
             len_extern = len(extern)
             if request.method == "POST" and "file" in request.files:
                 file = request.files["file"]
@@ -102,7 +103,7 @@ def submit_payment():
                     payment, error = sdk.post_payment(filename)
                     app.logger.debug(f'the payload : {payment}:   ')
                     return render_template('payment_response.html',payment=payment, error_pay=error)
-
+                
             if request.method == "POST":
                 urgency = request.form.get("urgency")
                 data['Priority'] = ""
@@ -149,9 +150,9 @@ def submit_payment():
             return redirect(url_for("login"))
 
     except Exception as e:
-        app.logger.error(e)
+        app.logger.error(f"Exception occured in submit_payment: {e}")
         return redirect(url_for("login"))
-    return render_template("submit_payment.html", data=data, extern=extern, list_extern = list_exteriban, history=pay_history, wallets_list=wallets)
+    return render_template("submit_payment.html", data=data, extern=extern, list_extern = list_exteriban, wallets_list=wallets)
 
 
 
@@ -195,6 +196,7 @@ def create_account():
 
 
     return render_template("recip.html", data=data)
+
 @app.route("/history", methods=["GET", "POST"])
 def history():
     pay_history = list(reversed(json.loads(rd.get('payments_histo'))))

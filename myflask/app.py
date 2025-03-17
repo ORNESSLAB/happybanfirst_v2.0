@@ -39,7 +39,7 @@ def login():
                 rd.set('payments_histo', json.dumps(sdk.get_payments_status("all")['payments']))
                 rd.set('wallets_info', json.dumps(sdk.get_wallets_holder_info()))
                 app.logger.debug(f'Header:  {sdk.auth.header()}')
-                return redirect(url_for("operation"))
+                return redirect(url_for("submit_payment"))
                 
         else:
             return render_template("login.html", error="Invalid credentials")
@@ -199,7 +199,7 @@ def create_account():
 
 @app.route("/history", methods=["GET", "POST"])
 def history():
-    pay_history = list(reversed(json.loads(rd.get('payments_histo'))))
+    pay_history = list(reversed(rd.get('payments_histo')))
 
     return render_template("history.html", history=pay_history)
 

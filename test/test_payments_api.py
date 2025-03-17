@@ -60,10 +60,9 @@ class TestPaymentsApi(unittest.TestCase):
     
     
     def test_bulk_payment(self):
-
-        self.assertIsInstance(self.sdk.post_payment(self.file)[0], list)
-        self.assertIsNotNone(self.sdk.post_payment(self.file)[0])
-    
+        pay = self.sdk.post_payment(self.file)[0]
+        self.assertIsInstance(pay, list)
+        self.assertIsNotNone(pay)
 
 
 

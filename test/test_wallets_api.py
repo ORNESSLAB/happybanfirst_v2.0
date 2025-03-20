@@ -42,6 +42,13 @@ class TestWalletsApi(unittest.TestCase):
         wallet = self.sdk.get_wallets_holder_info()
         self.assertIsInstance(wallet, list)
         self.assertIsNotNone(wallet)
+
+    def test_if_external_bank_account_existt(self):
+        """Test case for external_bank_account_id_get
+
+        Get external bank account details  # noqa: E501
+        """
+        self.assertTrue(self.sdk.check_if_external_bank_account_exist('NjczODA'))
         
     def test_fund_wallet(self): 
         """

@@ -1,13 +1,29 @@
-import pandas as pd
+
 from datetime import datetime
 import json
-from orness import error_exception
 import logging
+import pandas as pd
+from orness import error_exception
+
+"""
+This module contains utility functions that are used in the ORNESS application.
+"""
+
 
 
 logger = logging.getLogger(__name__)
 
-def date_format(date):
+def date_format(date) -> str:
+    """
+    Format the input date to a string in the format 'YYYY-MM-DD'.
+
+    Parameters:
+        date (str or datetime): The input date to be formatted.
+
+    Returns:
+        str: The formatted date in the format 'YYYY-MM-DD'.
+    """
+
     # Check if date is empty
     if not date:
         return datetime.now().strftime('%Y-%m-%d')
@@ -47,15 +63,12 @@ def read_data_from_file(filename):
         dict: the content of the excel file in json format
     """
     exc = pd.read_excel(filename).dropna(how='all')
-    
-    exc['Execution date'] = pd.to_datetime(exc['Execution date'], errors="coerce").dt.strftime('%Y-%m-%d')
+    exc['Execution date'] = pd.to_datetime(exc['Execution date'],
+                                           errors="coerce").dt.strftime('%Y-%m-%d')
     myjson = json.loads(exc.to_json(orient='records')) #convert str to dict
-    
     return myjson
 
 def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:str = "OUR") -> dict:
-   
-
     """
     Retrieve fee and priority options from a list of payment options.
 
@@ -81,16 +94,16 @@ def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:s
         An error code (default is NO_ERROR)
     """
     
-    ERROR = error_exception.NO_ERROR
+    error = error_exception.NO_ERROR
     option_returned = {}
     
     result = [option for option in options if option["priorityPaymentOption"] == priority.upper() and option['feePaymentOption'] == who_pays][0]
     if not options:
-        logger.error(f"No priorities found between the two accounts")
-        ERROR = error_exception.ERROR_NO_PRIORITY
+        logger.error("No priorities found between the two accounts")
+        error = error_exception.ERROR_NO_PRIORITY
     if not result:
         logger.error(f"Priority {priority} and fee payer {who_pays} not found in options: {options}")
-        ERROR = error_exception.ERROR_PRIORITIES_FOUND_BUT_NOT_WHAT_ENTER
+        error = error_exception.ERROR_PRIORITIES_FOUND_BUT_NOT_WHAT_ENTER
         
     else:
         option_returned = {
@@ -98,4 +111,4 @@ def get_payment_fee_and_priority(options: list, priority: str ="48H", who_pays:s
             "feeValue": result["feeCost"]["value"],
             "feeCurrency": result["feeCost"]['currency']
         }
-    return option_returned, ERROR
+    return option_returned, error

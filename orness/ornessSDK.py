@@ -37,7 +37,10 @@ class OrnessSDK:
         self.config.host = host
         self.auth = None
 
-    def login(self, username, password):
+    def login(self, username, password) -> None:
+        """
+        Login to the iBanFirst API with the given credentials.
+        """
         self.auth = Authentication(username=username, password=password)
     
     def api_client(self):
@@ -58,29 +61,52 @@ class OrnessSDK:
         
         return re.search(r'Nonce="([^"]*)"', self.auth.header()["X-WSSE"]).group(1)
         
-    def get_wallets(self):
+    def get_wallets(self) -> list:
+        """
+        Retrieve a list of wallets.
+
+        :return: A list of wallets
+        """
         try:
             api_client = self.api_client()
             wallets_api = WalletsApi(api_client)
             return wallets_api.wallets_get(_preload_content=False).json()['wallets']
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
+        return []
 
-    def get_wallet_by_id(self, wallet_id):
+    def get_wallet_by_id(self, wallet_id) -> dict:
+        """
+        Retrieve wallet information by id.
+
+        :param wallet_id: The id of the wallet
+        :return: A dictionary containing details of the wallet
+        """
         try:
             api_client = self.api_client()
             wallet_api = WalletsApi(api_client)
             return wallet_api.wallets_id_get(id=wallet_id, _preload_content=False).json()['wallet']
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
+        return {}
 
-    def get_payments_status(self, status):
+    def get_payments_status(self, status) -> dict:
+        """
+        Retrieves a list of payments with the given status.
+
+        Args:
+            status (str): The status of the payments to retrieve.
+
+        Returns:
+            dict: A dictionary containing the list of payments.
+        """
         try:
             api_client = self.api_client()
             payments_api = PaymentsApi(api_client)
             return payments_api.payments_status_get(status=status, _preload_content=False).json()
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
+        return {}
  
     def payload(self, excel_data_filename:str):
         """
@@ -111,20 +137,20 @@ class OrnessSDK:
             if data['Sender'] == 'Name':
                 line += 1
                 continue
-            payment_submit, ERRORS = Mapping(self.get_wallets_holder_info(), self.get_external_bank_account_info()).mapping_payment_submit(data)
+            payment_submit, errors = Mapping(self.get_wallets_holder_info(), self.get_external_bank_account_info()).mapping_payment_submit(data)
             if payment_submit:
                 options= self.retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
-                properties, OPT_ERROR  = utils.get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
+                properties, opt_errors  = utils.get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
 
-                if OPT_ERROR:
-                    payload_returned["ERROR"].append((OPT_ERROR, f"Line-{line}"))
+                if opt_errors:
+                    payload_returned["ERROR"].append((opt_errors, f"Line-{line}"))
                     continue
                 payment_submit["feePaymentOption"] = properties['feePaymentOption']
                 payment_submit["feeCurrency"] = properties['feeCurrency']
                 payload_returned['payment'].append(payment_submit)
-                payload_returned["ERROR"].append((ERRORS, f"Line-{line}"))
+                payload_returned["ERROR"].append((errors, f"Line-{line}"))
             else:
-                payload_returned["ERROR"].append((ERRORS,f"Line-{line}"))
+                payload_returned["ERROR"].append((errors,f"Line-{line}"))
 
             line += 1
         return payload_returned
@@ -150,7 +176,6 @@ class OrnessSDK:
         """
         load_pay = self.payload(excel_data_filename)
         payment_sub = load_pay['payment']
-        print(payment_sub)
         error = load_pay['ERROR']
         flag = 0
         post_payment_response = []
@@ -159,7 +184,7 @@ class OrnessSDK:
             if er[0]['SOURCE_ERROR'] == er[0]['BENEFICIARY_ERROR'] == er[0]['ERROR_CURRENCY']:
                 flag = 1
             else:
-                logger.error(f"Error in the file: {er}")
+                logger.error("Error in the file: %s", er)
                 flag = 0
                 return post_payment_response, error
         if flag == 1:
@@ -203,19 +228,47 @@ class OrnessSDK:
             payments_api = PaymentsApi(api_client)
             if self.check_if_external_bank_account_exist(external_bank_account_id=external_id) and self.check_if_wallet_exist(wallet_id=wallet_id):
                 return payments_api.payments_options_wallet_id_external_bank_account_id_get(external_bank_account_id=external_id, wallet_id=wallet_id, _preload_content=False).json()['paymentOption']['options']
+            
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")
+        return []
     
     def check_if_wallet_exist(self, wallet_id):
-        return True if self.get_wallet_by_id(wallet_id=wallet_id) else False
+        """Check if the wallet exists
+
+        Parameters
+        ----------
+        wallet_id : str
+            The wallet id
+
+        Returns
+        -------
+        bool
+            True if the wallet exists, False otherwise
+        """
+
+        return self.get_wallet_by_id(wallet_id=wallet_id) != {}
     
-    
-    def check_if_external_bank_account_exist(self, external_bank_account_id):
-        
-        return True if self.get_external_bank_account_by_id(external_id=external_bank_account_id) else False
     
 
-    def get_wallets_holder_info(self):
+    def check_if_external_bank_account_exist(self, external_bank_account_id) -> bool:
+        """Check if the external bank account exists
+
+        Parameters
+        ----------
+        external_bank_account_id : str
+            The external bank account id
+
+        Returns
+        -------
+        bool
+            True if the external bank account exists, False otherwise
+        """
+        
+        return  self.get_external_bank_account_by_id(external_id=external_bank_account_id) != {}
+    
+
+    def get_wallets_holder_info(self) -> list: 
         """
         Return a list of wallets with their id, amountValue, amountCurrency and info of the holder
         """
@@ -231,7 +284,13 @@ class OrnessSDK:
 
         return list_of_wallet_info  
     
-    def get_external_bank_account_by_id(self, external_id):
+    def get_external_bank_account_by_id(self, external_id) -> dict:
+        """
+        Retrieve external bank account information by id.
+
+        :param external_id: The id of the external bank account
+        :return: A dictionary containing details of the external bank account
+        """
         try:
             api_client = self.api_client()
         
@@ -241,7 +300,18 @@ class OrnessSDK:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
 
         
-    def get_external_bank_accounts(self):
+    def get_external_bank_accounts(self) -> list:
+        """
+        Return a list of external bank accounts
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list
+            A list of external bank accounts
+        """
         try:
             api_client = self.api_client()
             external_bank_account_api = ExternalBankAccountApi(api_client)

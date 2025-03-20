@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import unittest
 from orness.ornessSDK  import OrnessSDK
+
 class TestWalletsApi(unittest.TestCase):
     """WalletsApi unit test stubs"""
 
@@ -13,6 +14,7 @@ class TestWalletsApi(unittest.TestCase):
          # noqa: E501
         self.sdk = OrnessSDK()
         self.sdk.login(password="61JyoSK8GW6q395cXJTy0RtuhaFpIaxJCiMRESAVjEAO5kXJ+h0XsGGRD3gJu/pRrJyrr6C5u8voxAzleA/k6g==", username="mn11256")
+        
      
     def tearDown(self):
         pass
@@ -22,6 +24,7 @@ class TestWalletsApi(unittest.TestCase):
 
         Get wallet list  # noqa: E501
         """
+        
         
 
     def test_wallets_id_balance_date_get(self):
@@ -48,7 +51,7 @@ class TestWalletsApi(unittest.TestCase):
     
     def test_fund_wallet_false(self): 
         """
-        Test case for fund_wallet
+        Test case for not enough fund in wallet
         """
         self.assertFalse(self.sdk.check_account_value('NjczODE', 10000))
 

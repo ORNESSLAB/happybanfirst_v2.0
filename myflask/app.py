@@ -100,7 +100,7 @@ def submit_payment():
                     return redirect(request.url)
                 if file:
                     filename = secure_filename(file.filename)
-                    payment, error = sdk.post_payment(filename)
+                    payment, error = sdk.post_mass_payment(filename)
                     app.logger.debug(f'the payload : {payment}:   ')
                     return render_template('payment_response.html',payment=payment, error_pay=error)
                 

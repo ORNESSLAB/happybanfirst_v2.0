@@ -5,6 +5,7 @@ import json
 from pprint import pprint
 from datetime import datetime
 from orness import utils
+from ibanfirst_client.api.auth_api import AuthApi
 from ibanfirst_client.api_client import ApiClient
 from ibanfirst_client.api.wallets_api import WalletsApi
 from ibanfirst_client.api.payments_api import PaymentsApi
@@ -15,6 +16,7 @@ from orness.config import Config
 from orness.auth import Authentication
 from orness import error_exception
 from orness.mapping import Mapping
+import re
 
 
 
@@ -26,21 +28,36 @@ logger = logging.getLogger(__name__)
 
     
 class OrnessSDK:
-    def __init__(self):
+    """
+    OrnessSDK class to interact with the iBanFirst API.
+    
+    """
+    def __init__(self, host="https://sandbox.ibanfirst.com/api"):
         self.config = Config()
+        self.config.host = host
         self.auth = None
 
     def login(self, username, password):
         self.auth = Authentication(username=username, password=password)
-        
     
     def api_client(self):
+        """
+        Creates and returns an instance of the ApiClient with the necessary authentication headers.
+
+        Returns:
+            ApiClient: Configured API client instance for making requests.
+        """
         api_client = ApiClient(configuration=self.config)
         api_client.default_headers = self.auth.header()
         return api_client
-    
-  
-
+        
+    def get_nonce_token(self):
+        """
+        Get the nonce token from the authentication header.
+        """
+        
+        return re.search(r'Nonce="([^"]*)"', self.auth.header()["X-WSSE"]).group(1)
+        
     def get_wallets(self):
         try:
             api_client = self.api_client()
@@ -64,8 +81,7 @@ class OrnessSDK:
             return payments_api.payments_status_get(status=status, _preload_content=False).json()
         except ApiException as e:
             logger.error(f"Error : {e.status}\n{e.reason} - {re.search(r'\"ErrorMessage\"\s*:\s*\"(.*)\"', str(e.body))}")
-
-    
+ 
     def payload(self, excel_data_filename:str):
         """
         Process payment data from an Excel file and prepare a payload for payment operations.
@@ -95,7 +111,7 @@ class OrnessSDK:
             if data['Sender'] == 'Name':
                 line += 1
                 continue
-            payment_submit, ERRORS = Mapping(self.get_wallets_holder_info(), self.get_external_bank_account_info()).mapping_payment_submit_v2(data)
+            payment_submit, ERRORS = Mapping(self.get_wallets_holder_info(), self.get_external_bank_account_info()).mapping_payment_submit(data)
             if payment_submit:
                 options= self.retreive_option_list(external_id=payment_submit['externalBankAccountId'], wallet_id=payment_submit['sourceWalletId'])
                 properties, OPT_ERROR  = utils.get_payment_fee_and_priority(priority=payment_submit["priorityPaymentOption"], options=options)
@@ -113,7 +129,7 @@ class OrnessSDK:
             line += 1
         return payload_returned
     
-    def post_payment(self, excel_data_filename: str) -> list:
+    def post_mass_payment(self, excel_data_filename: str) -> tuple:
 
         """
         Read the excel file and for each line, call the payload function to construct the payment JSON body.
@@ -134,6 +150,7 @@ class OrnessSDK:
         """
         load_pay = self.payload(excel_data_filename)
         payment_sub = load_pay['payment']
+        print(payment_sub)
         error = load_pay['ERROR']
         flag = 0
         post_payment_response = []
@@ -148,16 +165,39 @@ class OrnessSDK:
         if flag == 1:
             for val in payment_sub:               
                 if isinstance(val, dict):
-
                     try:
-                        api_client = self.api_client()
-                        payments_api = PaymentsApi(api_client)
-                        post_payment_response.append(payments_api.payments_post(body=val, _preload_content=False).json())         
+                        post_payment_response.append(self.post_payment(val))  
                     except ApiException as e:
-                        logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")   
+                        logger.error(f"Error [postpay]: {e.status}\n{e.reason} - {re.search(r'"ErrorMessage":\B"(.*)\B",', str(e.body))}")         
+                     
         return post_payment_response, error
     
-    def retreive_option_list(self, external_id:str, wallet_id:str):
+    def post_payment(self, payload):
+        """
+        post payement submit on
+        """
+        
+        val = payload
+        
+        api_client = self.api_client()
+        payments_api = PaymentsApi(api_client)
+        return payments_api.payments_post(body=val, _preload_content=False).json()
+        
+    def retreive_option_list(self, external_id:str, wallet_id:str) -> list:
+        """Retreive list of fee options between wallet and external bank account
+
+        Parameters
+        ----------
+        external_id : str
+            The external bank account id
+        wallet_id : str
+            The wallet id
+
+        Returns
+        -------
+        list
+            A list of fee options
+        """
         try:
             api_client = self.api_client()
             payments_api = PaymentsApi(api_client)
@@ -238,6 +278,5 @@ class OrnessSDK:
         
         return any(i['id'] == wallet_id and float(i['amountValue']) >= amount for i in self.get_wallets_holder_info())
     
-  
-    
+
     

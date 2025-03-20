@@ -145,14 +145,9 @@ class Mapping():
     
 
     
-    def mapping_payment_submit_v2(self, data:dict) -> dict:
+    def mapping_payment_submit(self, data:dict) -> dict:
         payment_submit = {}
-        #TODO: check the amount currency
-        #TODO: check wallet holder name
-        #TODO: check beneficiary holder name
-        #TODO: return error value
-
-        
+       
         external_Id, BENEFICIARY_ERROR = self.choose_beneficiary(data)
         source_Id, SOURCE_ERROR = self.choose_the_wallet(data=data)
         logger.debug(f" Recipient ID: {external_Id} and Sender ID: {source_Id}")
@@ -161,7 +156,7 @@ class Mapping():
         if not data['Amount']:
             return payment_submit, {"SOURCE_ERROR":SOURCE_ERROR, "BENEFICIARY_ERROR":BENEFICIARY_ERROR, "AMOUNT_ERROR": error_exception.AMOUNT_NOT_PROVIDED, "ERROR_CURRENCY": error_exception.NO_ERROR}
 
-        
+        #test currencies
         if external_Id[0][1] == data["Currency"] or not data["Currency"]:
             payment_submit['externalBankAccountId'] = external_Id[0][0]
             payment_submit['sourceWalletId'] = source_Id[0][0]

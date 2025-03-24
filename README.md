@@ -1,4 +1,6 @@
 
+![orness_logo](images/logo_orness.png)
+
 Orness IBanFirst SDK
 ====================
 Orness SDK allow client to process batch payments with ibanfirst.
@@ -17,8 +19,8 @@ To generate the swagger client we need java installed.
 run install.sh 
 
 
-
 ## Authentication
+
 username and password are provided by IBanFirst
 
 ```
@@ -29,6 +31,7 @@ sdk.login(username="user",password="password")
 ```
 
 ## Bulk Payments
+
 ```
 file = "new_payments_v2.xlsx"
 sdk.post_payment(file) # return list of payments with status (awaintingconfirmation, planified) and ERRORs [list of payments, list of errors]
@@ -38,7 +41,7 @@ sdk.post_payment(file) # return list of payments with status (awaintingconfirmat
 ## Excel File
 the template of the excel file is : 
 ```
-new_payments_v2.xlsx
+![excel tamplate](images/column_name_tamplate.png)
 ```
 
 
@@ -49,6 +52,7 @@ We make a POC with flask to test how to use the SDK
 cd myflask
 python3 app.py
 ```
+
 
 
 

@@ -40,9 +40,8 @@ sdk.post_payment(file) # return list of payments with status (awaintingconfirmat
 
 ## Excel File
 the template of the excel file is : 
-```
-![excel tamplate](images/column_name_tamplate.png)
-```
+![excel_tamplate](images/column_name_tamplate.png)
+
 
 
 ## TEST

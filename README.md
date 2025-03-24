@@ -1,5 +1,5 @@
 
-![orness_logo](images/logo_orness.png)
+![orness_logo](images/logo-orness.png)
 
 Orness IBanFirst SDK
 ====================

@@ -11,6 +11,7 @@ parse the excel and send payments request to ibanfirst.
 
 ## requirement
 java >= 11 
+python 3
 
 To generate the swagger client we need java installed.
 
@@ -27,7 +28,7 @@ username and password are provided by IBanFirst
 from orness.ornessSDK import OrnessSDK
 
 sdk = OrnessSDK()
-sdk.login(username="user",password="password")
+sdk.login(username="user",password="password", host="https://api.ibanfirst.com")
 ```
 
 ## Bulk Payments

@@ -68,6 +68,13 @@ class TestWalletsApi(unittest.TestCase):
         Submit a new wallet  # noqa: E501
         """
         pass
+
+    def test_external_with_same_bic(self):
+        """
+        Test case for external_with_same_bic
+        
+        """
+        self.assertIsNotNone(self.sdk.get_external_bank_account_with_same_bic())
     
     
     

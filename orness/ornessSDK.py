@@ -284,6 +284,25 @@ class OrnessSDK:
 
         return list_of_wallet_info  
     
+    def get_external_bank_account_with_same_bic(self) -> list:
+        """
+        Return a list of external bank accounts with the same bic
+
+        Returns
+        -------
+        list
+           A list of external bank accounts with the same bic
+        """
+        list_of_external_bank_account = self.get_external_bank_account_info()
+        result = []
+        for i in list_of_external_bank_account:
+            for j in list_of_external_bank_account:
+                if i['holderBankBic'] == j['holderBankBic'] and i['id'] != j['id']:
+                    result.append(i)
+                    result.append(j)
+        return result
+      
+    
     def get_external_bank_account_by_id(self, external_id) -> dict:
         """
         Retrieve external bank account information by id.

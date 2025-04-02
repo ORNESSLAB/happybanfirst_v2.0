@@ -10,9 +10,12 @@ parse the excel and send payments request to ibanfirst.
 
 
 ## requirement
+```sh
 poetry
 java >= 11 
-python 3
+python3
+
+```
 
 To generate the swagger client we need java installed.
 
@@ -65,8 +68,13 @@ run
 source install.sh 
 
 ```
+## Version
+For more [information] (https://python-poetry.org/docs/cli/#version)
 
+```bash
+poetry version minor
 
+```
 
 ## Authentication
 
@@ -98,7 +106,7 @@ We make a POC with flask to test how to use the SDK
 
 ```sh
 poetry add flask
-poetry run python app.py
+poetry run python myflask/app.py
 ```
 
 

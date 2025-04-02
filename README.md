@@ -10,6 +10,7 @@ parse the excel and send payments request to ibanfirst.
 
 
 ## requirement
+poetry
 java >= 11 
 python 3
 
@@ -17,14 +18,61 @@ To generate the swagger client we need java installed.
 
 ### setup ornessSDK
 
-run install.sh 
+```bash
+
+#! /usr/bin/bash
+
+
+function install {
+    SWAGGER_YAML="../swagger.yaml"
+    CODEGEN_JAR="swagger-codegen-cli.jar"
+    CODEGEN_URL="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.66/swagger-codegen-cli-3.0.66.jar"
+    mkdir src
+    cd src
+    echo "Download swagger codegen jar" 
+    wget "$CODEGEN_URL"  -O "$CODEGEN_JAR"
+    echo "Download the ClientAPI swagger "
+    #/usr/bin/wget https://docs.ibanfirst.com/apis/clientapi/ClientAPI.yaml -P /var/tmp/
+
+    echo "Generate ibanfirst client api"
+    java -jar "$CODEGEN_JAR" generate -i  "$SWAGGER_YAML" -l python
+    echo "change swagger-client to ibanfirst_client in entire project"
+    mv swagger_client ibanfirst_client
+    sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
+    sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
+    sed -i 's/swagger_client/ibanfirst_client/g' test/*.py
+    #sed -i 's/swagger-client/Orness_client/g' setup.py
+    cd ..
+    
+    
+}
+
+#-------------------------------------------------
+
+install
+poetry --version
+poetry lock --no-interaction
+poetry install --no-interaction
+poetry build
+poetry env activate
+#-------------------------------------------------
+
+
+```
+run 
+
+```sh
+source install.sh 
+
+```
+
 
 
 ## Authentication
 
 username and password are provided by IBanFirst
 
-```
+```python
 from orness.ornessSDK import OrnessSDK
 
 sdk = OrnessSDK()
@@ -33,7 +81,7 @@ sdk.login(username="user",password="password", host="https://api.ibanfirst.com")
 
 ## Bulk Payments
 
-```
+```python
 file = "new_payments_v2.xlsx"
 sdk.post_payment(file) # return list of payments with status (awaintingconfirmation, planified) and ERRORs [list of payments, list of errors]
 ```
@@ -48,9 +96,9 @@ the template of the excel file is :
 ## TEST
 We make a POC with flask to test how to use the SDK
 
-```
-cd myflask
-python3 app.py
+```sh
+poetry add flask
+poetry run python app.py
 ```
 
 

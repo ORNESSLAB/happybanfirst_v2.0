@@ -37,8 +37,4 @@ class RedisCache:
     def clear(self):
         self.r.flushdb()
 
-if __name__ == '__main__':
-    rd = RedisCache()
-    print(rd.get('wallets_info'))
-    print("")
 

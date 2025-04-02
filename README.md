@@ -35,7 +35,7 @@ function install {
     echo "Download swagger codegen jar" 
     wget "$CODEGEN_URL"  -O "$CODEGEN_JAR"
     echo "Download the ClientAPI swagger "
-    #/usr/bin/wget https://docs.ibanfirst.com/apis/clientapi/ClientAPI.yaml -P /var/tmp/
+    
 
     echo "Generate ibanfirst client api"
     java -jar "$CODEGEN_JAR" generate -i  "$SWAGGER_YAML" -l python
@@ -44,7 +44,6 @@ function install {
     sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*.py
     sed -i 's/swagger_client/ibanfirst_client/g' ibanfirst_client/*/*.py
     sed -i 's/swagger_client/ibanfirst_client/g' test/*.py
-    #sed -i 's/swagger-client/Orness_client/g' setup.py
     cd ..
     
     
@@ -69,7 +68,7 @@ source install.sh
 
 ```
 ## Version
-For more [information] (https://python-poetry.org/docs/cli/#version)
+For more [information](https://python-poetry.org/docs/cli/#version)
 
 ```bash
 poetry version minor
